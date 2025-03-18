@@ -1,9 +1,17 @@
+const dotenv = require('dotenv')
+dotenv.config({ path: "../.env" })
 const OpenAI = require("openai");
 const mic = require("mic");
 const fs = require("fs");
 
+const apikey = process.env.LEMONFOX_KEY;
+if (!apikey) {
+  console.error("API key not found! Please set LEMONFOX_KEY or OPENAI_KEY in your .env file.");
+  process.exit(1);
+}
+
 const openai = new OpenAI({
-  apiKey: "",
+  apiKey: apikey,
   baseURL: "https://api.lemonfox.ai/v1",
 });
 
