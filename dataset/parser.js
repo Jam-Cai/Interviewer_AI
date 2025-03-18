@@ -3,7 +3,7 @@ const csv = require('csv-parser');
 const path = require('path');
 
 const inputFilePath = path.join(__dirname, 'dataset.csv');
-const outputFilePath = path.join(__dirname, 'output.json');
+const outputFilePath = path.join(__dirname, 'problems.json');
 
 const output = [];
 

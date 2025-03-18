@@ -20322,7 +20322,7 @@
       "Input: n = 4\nOutput: 2\nExplanation: perm = [0,1,2,3] initially.\n\nAfter the 1st operation, perm = [0,2,1,3]\nAfter the 2nd operation, perm = [0,1,2,3]\nSo it takes only 2 operations.",
       "Input: n = 6\nOutput: 4"
     ],
-    "constraints": "`2 <= n <= 1000`\n`n`​​​​ is even."
+    "constraints": "`2 <= n <= 1000`\n`n`​​​​​​ is even."
   },
   {
     "id": "1807",

@@ -1,10 +1,11 @@
+const OpenAI = require("openai");
 const mic = require("mic");
 const fs = require("fs");
-const axios = require("axios");
 
-// OpenAI Whisper API settings
-const API_KEY = "your_openai_api_key";
-const WHISPER_URL = process.env.LEMONFOX_KEY
+const openai = new OpenAI({
+  apiKey: "",
+  baseURL: "https://api.lemonfox.ai/v1",
+});
 
 // Configure microphone settings
 const micInstance = mic({
@@ -20,19 +21,13 @@ console.log("🎙️ Listening... Press Ctrl+C to stop.");
 
 // Function to send audio chunks to Whisper API
 async function transcribeAudio(filePath) {
-  const formData = new FormData();
-  formData.append("file", fs.createReadStream(filePath));
-  formData.append("model", "whisper-1");
-
   try {
-    const response = await axios.post(WHISPER_URL, formData, {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        ...formData.getHeaders(),
-      },
+    const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(filePath),
+      model: "whisper-1",
     });
 
-    console.log("📝 Transcription:", response.data.text);
+    console.log("📝 Transcription:", transcription.text);
   } catch (error) {
     console.error("❌ Error:", error.response?.data || error.message);
   }
@@ -44,12 +39,16 @@ micInstance.start();
 
 micInputStream.on("data", async (data) => {
   const fileName = `audio_chunk_${fileCounter}.wav`;
-  fs.writeFileSync(fileName, data);
   
-  await transcribeAudio(fileName);
-
-  fs.unlinkSync(fileName); // Delete the file after processing
-  fileCounter++;
+  try {
+    fs.writeFileSync(fileName, data);
+    await transcribeAudio(fileName);
+  } catch (err) {
+    console.error("File Error:", err);
+  } finally {
+    fs.unlinkSync(fileName); // Delete file after processing
+    fileCounter++;
+  }
 });
 
 micInputStream.on("error", (err) => {
