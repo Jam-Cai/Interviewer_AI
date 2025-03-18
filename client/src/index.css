@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --background: #232323;
+  --orange:rgb(255, 168, 61);
+  --green:rgb(75, 227, 106);
+  --red:rgb(247, 91, 91);
+  --code-fill: #2A2A2A;
+  --code-stroke: #414141;
+  --code-text: #D4D4D4;
+  --border: #4A4A4A;
+}
+
+body {
+  background: var(--background);
+  font-family: Montserrat, sans-serif;
+  color: white;
+}
