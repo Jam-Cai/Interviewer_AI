@@ -4,17 +4,21 @@
     "main": "index.js",
     "scripts": {
         "start": "node index",
-        "dev": "nodemon index.js"
+        "dev": "nodemon index.js",
+        "test": "node parser.js"
     },
     "author": "",
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "axios": "^1.8.3",
         "cors": "^2.8.5",
         "date-fns": "^3.6.0",
         "dotenv": "^16.4.7",
         "express": "^4.19.2",
-        "openai": "^4.80.1",
+        "fs": "^0.0.1-security",
+        "mic": "^2.1.2",
+        "openai": "^4.87.3",
         "uuid": "^10.0.0"
     },
     "devDependencies": {
