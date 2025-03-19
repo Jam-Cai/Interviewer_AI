@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
 // Socket.io Configuration
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 const openai = new OpenAI({
-    apiKey: "adXwoAZ5CoUEzJ9X5jDWBas50LywsaDm",
+    apiKey: process.env.LEMONFOX_KEY,
     baseURL: "https://api.lemonfox.ai/v1",
 });
 
