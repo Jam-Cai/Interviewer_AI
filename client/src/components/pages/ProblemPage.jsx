@@ -132,7 +132,8 @@ function ProblemPage() {
 
           const response = await axios.post('http://localhost:3000/api/transcribe', formData, {
             headers: { "Content-Type": "multipart/form-data" },
-            responseType: 'blob'
+            responseType: 'blob',
+            withCredentials: true
           });
           
           // Create an object URL from the received blob.
@@ -182,10 +183,10 @@ function ProblemPage() {
       const response = await axios.post('http://localhost:3000/api/start', {
         title: problem.title,
         explanation: problem.explanation,
-        examples: problem.examples,
-        withCredentials: true
+        examples: problem.examples
       }, {
-        responseType: 'blob' // 👈 important: expecting audio
+        responseType: 'blob', // 👈 important: expecting audio
+        withCredentials: true
       });
 
       setStatus('Processing audio...');
