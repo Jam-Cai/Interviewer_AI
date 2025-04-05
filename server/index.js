@@ -13,7 +13,7 @@ const { Readable } = require('stream');
 
 
 const { getAIResponse } = require(path.join(__dirname, 'reviewCode.js'))
-const { summarize } = require(path.join(__dirname, 'summarize'));
+const { summarize } = require(path.join(__dirname, 'summarize.js'));
 
 const httpAgent = new http.Agent({ keepAlive: true });
 
@@ -289,7 +289,7 @@ app.post('/api/answer-question', async (req, res) => {
   }
 });
 
-
+// end the interview
 app.post('/api/end', async (req, res) => {
 
 	// make the conversation history for a new session
@@ -317,6 +317,7 @@ app.post('/api/end', async (req, res) => {
 	}
 })
 
+// start the interview
 app.post('/api/start', async (req, res) => {
 
 	// make the conversation history for a new session
