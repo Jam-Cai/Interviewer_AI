@@ -61,6 +61,7 @@ app.get('/api/problem/:id', (req, res) => {
           req.session.summarizedHistory = ""
       }
   
+	  const type = "submit-code"
       const title = req.body.title;
       const explanation = req.body.explanation;
       const examples = req.body.examples;
@@ -77,7 +78,7 @@ app.get('/api/problem/:id', (req, res) => {
         })
   
       try {
-          const aiResponse = await getAIResponse(title, explanation, examples, constraints, code, req.session.summarizedHistory)
+          const aiResponse = await getAIResponse(type, req.session.summarizedHistory, title, explanation, examples, constraints, code)
   
           // add the AI's output in the conversation history
           req.session.conversationHistory.push({
@@ -103,7 +104,8 @@ app.post('/api/answer-question', async (req, res) => {
     req.session.summarizedHistory = "";
   }
 
-  const answer = req.body.answer;
+  const type = "answer-question"
+  const answer = req.body.answer
   const highlight = req.body.highlight
 
   // add the candidate's answer into the conversation history
@@ -113,7 +115,7 @@ app.post('/api/answer-question', async (req, res) => {
   });
 
   try {
-      const aiResponse = await getAIResponse(answer, highlight, req.session.summarizedHistory);
+      const aiResponse = await getAIResponse(type, req.session.summarizedHistory, answer, highlight);
 
       // add the AI's response to the conversation history
       req.session.conversationHistory.push({
@@ -129,6 +131,65 @@ app.post('/api/answer-question', async (req, res) => {
   }
 });
 
+
+app.post('/api/end', async (req, res) => {
+
+	// make the conversation history for a new session
+	if (!req.session.conversationHistory) {
+		req.session.conversationHistory = [];
+		req.session.summarizedHistory = "";
+	}
+
+	const type = "end"
+
+	try {
+		const aiResponse = await getAIResponse(type, req.session.summarizedHistory);
+  
+		// add the AI's response to the conversation history
+		req.session.conversationHistory.push({
+			role: 'assistant',
+			content: `The AI said: ${aiResponse.content}`
+		});
+  
+		req.session.summarizedHistory = await summarize(req.session.conversationHistory);
+  
+		res.json({ response: aiResponse });
+	} catch (error) {
+		res.status(500).json({ error: "bad AI submission" });
+	}
+})
+
+app.post('/api/start', async (req, res) => {
+
+	// make the conversation history for a new session
+	if (!req.session.conversationHistory) {
+		req.session.conversationHistory = [];
+		req.session.summarizedHistory = "";
+	}
+
+	const type = "start"
+
+	const title = req.body.title;
+	const explanation = req.body.explanation;
+	const examples = req.body.examples;
+	const constraints = req.body.constraints;
+
+	try {
+		const aiResponse = await getAIResponse(type, req.session.summarizedHistory, title, explanation, examples, constraints);
+  
+		// add the AI's response to the conversation history
+		req.session.conversationHistory.push({
+			role: 'assistant',
+			content: `The AI started the interview by saying: ${aiResponse.content}`
+		});
+  
+		req.session.summarizedHistory = await summarize(req.session.conversationHistory);
+  
+		res.json({ response: aiResponse });
+	} catch (error) {
+		res.status(500).json({ error: "bad AI submission" });
+	}
+})
 
 
 app.get("^/$|/index(.html)?", (req, res) => {
