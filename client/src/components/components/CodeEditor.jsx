@@ -13,7 +13,7 @@ import { Play } from "lucide-react";
 import Timer from "./Timer";
 import MuteButton from './MuteButton';
 
-function CodeEditor({ hasStarted }) {
+function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status }) {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("cpp");
   const [output, setOutput] = useState("");
@@ -64,6 +64,7 @@ function CodeEditor({ hasStarted }) {
 
   return (
     <div id="code-editor" className="w-full p-6 pl-7 h-screen flex flex-col bg-(--background) text-white">
+
       {/* Header */}
       <div className="flex justify-between items-center border-b border-(--code-stroke) pb-3">
         <div className="flex items-center">
@@ -172,7 +173,7 @@ function CodeEditor({ hasStarted }) {
       </div>
 
       {/* Mute Button */}
-      <MuteButton hasStarted={hasStarted} />
+      <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} />
     </div>
   );
 }

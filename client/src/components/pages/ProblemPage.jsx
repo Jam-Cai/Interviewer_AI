@@ -12,10 +12,11 @@ function ProblemPage() {
   const [problem, setProblem] = useState(null);
   const [error, setError] = useState('Loading problem details...');
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Transcription useStates
   const [status, setStatus] = useState('Ready to record');
-  const [averageVolume, setAverageVolume] = useState('N/A');
+  const [averageVolume, setAverageVolume] = useState(0);
   const [recording, setRecording] = useState(false);
 
   const socketRef = useRef(null);
@@ -71,6 +72,10 @@ function ProblemPage() {
   };
 
   const startRecording = async () => {
+    if (status == 'Recording in progress...' || status == 'Processing audio...') {
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -134,9 +139,12 @@ function ProblemPage() {
           const mp3Blob = response.data;
           const audioUrl = URL.createObjectURL(mp3Blob);
           const audio = new Audio(audioUrl);
+
+          audio.onended = () => {
+            setStatus('Ready to record');
+          };
+
           audio.play();
-      
-          setStatus('Ready to record');
         } catch (err) {
           console.error('Error sending audio:', err);
           setStatus('Error sending audio to server');
@@ -166,17 +174,55 @@ function ProblemPage() {
     return <div className="text-white mt-5 ml-5">{error}</div>;
   }
 
+  const handleStartInterview = async () => {
+    if (!problem || loading) return;
+    setLoading(true);
+  
+    try {
+      const response = await axios.post('http://localhost:3000/api/start', {
+        title: problem.title,
+        explanation: problem.explanation,
+        examples: problem.examples
+      }, {
+        responseType: 'blob' // 👈 important: expecting audio
+      });
+
+      setStatus('Processing audio...');
+  
+      console.log('AI Interview Started:', response.data);
+
+      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+
+      audio.onended = () => {
+        setStatus('Ready to record');
+      };
+
+      setStarted(true);
+    } catch (err) {
+      console.error('Failed to start the interview:', err);
+      setError("Failed to start the interview. Please try again.");
+    } finally {
+      setLoading(false); // ✅ reset loading state
+    }
+  };
+  
+
   return (
     <div className="flex flex-row h-screen">
 
       {/* SHOW OVERLAY IF NOT STARTED */}
-      {!started && <StartOverlay onStart={() => setStarted(true)} />}
+      {!started && <StartOverlay isLoading={loading} onStart={() => {
+        handleStartInterview();
+      }} />}
 
       {/* Problem Description */}
       <ProblemDescription problem={problem} />
 
       {/* Code Editor */}
-      <CodeEditor hasStarted={started} />
+      <CodeEditor hasStarted={started} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} status={status} />
 
     </div>
   );

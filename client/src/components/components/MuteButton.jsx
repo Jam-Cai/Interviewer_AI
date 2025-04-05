@@ -1,31 +1,65 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-const MuteButton = ({ hasStarted }) => {
-  const [isMuted, setIsMuted] = useState(false);
+const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status }) => {
+  const [isMuted, setIsMuted] = useState(true);
   const [amplitude, setAmplitude] = useState(0);
   const [barMultipliers, setBarMultipliers] = useState([1, 1, 1]);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [overlayText, setOverlayText] = useState("");
+  const overlayTimeoutRef = useRef(null);
 
   const toggleMute = () => {
     if (!hasStarted) return;
-    setIsMuted((prev) => !prev);
+
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+
+    // Call recording functions
+    if (newMuted) {
+      stopRecording?.();
+    } else {
+      startRecording?.();
+    }
+
+    setOverlayText(newMuted ? "Muted" : "Unmuted");
+    setShowOverlay(true);
+
+    if (overlayTimeoutRef.current) clearTimeout(overlayTimeoutRef.current);
+    overlayTimeoutRef.current = setTimeout(() => setShowOverlay(false), 2000);
   };
 
-  // Simulate amplitude changes
+  useEffect(() => {
+    if (status == "Ready to record" && !isMuted) {
+      startRecording();
+    }
+  }, [status]);
+
+  // Keyboard shortcut (Ctrl + D)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.metaKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMuted, hasStarted]);
+
+  // Handle amplitude based on averageVolume
   useEffect(() => {
     if (!hasStarted || isMuted) {
       setAmplitude(0.1);
       return;
     }
 
-    const interval = setInterval(() => {
-      const randomAmplitude = Math.random();
-      setAmplitude(randomAmplitude);
-    }, 100);
+    const clampedVolume = Math.min(averageVolume, 60);
+    const normalized = Math.max(Math.min(clampedVolume / 30, 1), 0.2);
+    setAmplitude(normalized);
+  }, [isMuted, hasStarted, averageVolume]);
 
-    return () => clearInterval(interval);
-  }, [isMuted, hasStarted]);
-
-  // Simulate bar movement
+  // Bar animation
   useEffect(() => {
     const interval = setInterval(() => {
       if (!hasStarted || isMuted) {
@@ -42,43 +76,55 @@ const MuteButton = ({ hasStarted }) => {
   }, [isMuted, hasStarted]);
 
   return (
-    <div className="fixed bottom-10 right-10 bg-(--mute-bg-light) rounded-full flex">
-      {/* Bars */}
-      <div className="flex items-center justify-end pr-3.5 pl-5">
-        <div className="flex space-x-[3px] items-center h-6">
-          {barMultipliers.map((multiplier, i) => (
-            <div
-              key={i}
-              className="w-[3px] bg-white rounded-full transition-transform transition-all duration-250"
-              style={{
-                transform: `scaleY(${amplitude * multiplier})`,
-                transformOrigin: "center",
-                height: "28px",
-              }}
-            />
-          ))}
+    <>
+      {/* Mute Overlay */}
+      {showOverlay && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                        bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
+                        opacity-90 fade-out pointer-events-none z-50">
+          {overlayText}
         </div>
-      </div>
+      )}
 
-      {/* Mute/Unmute Button */}
-      <button
-        className="cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md hover:bg-(--red) hover:scale-102 transition-all active:scale-95 z-50"
-        onClick={toggleMute}
-        aria-label={isMuted ? "Unmute" : "Mute"}
-        disabled={!hasStarted}
-      >
-        {isMuted ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-          </svg>
-        )}
-      </button>
-    </div>
+      {/* Mute Button + Bars */}
+      <div className="fixed bottom-10 right-10 bg-(--mute-bg-light) rounded-full flex">
+        {/* Bars */}
+        <div className="flex items-center justify-end pr-3.5 pl-5">
+          <div className="flex space-x-[3px] items-center h-6">
+            {barMultipliers.map((multiplier, i) => (
+              <div
+                key={i}
+                className="w-[3px] bg-white rounded-full transition-transform transition-all duration-250"
+                style={{
+                  transform: `scaleY(${amplitude * multiplier})`,
+                  transformOrigin: "center",
+                  height: "28px",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Mute/Unmute Button */}
+        <button
+          className="cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md hover:bg-(--red) hover:scale-102 transition-all active:scale-95 z-50"
+          onClick={toggleMute}
+          aria-label={isMuted ? "Unmute" : "Mute"}
+          disabled={!hasStarted}
+        >
+          {isMuted ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </>
   );
 };
 

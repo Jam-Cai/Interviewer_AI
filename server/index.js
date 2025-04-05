@@ -148,10 +148,10 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     console.log("🧠 Received AI reply:", replyText);
 
     console.log("🗣️ Generating TTS via OpenAI...");
-    // Use allowed voice ("nova") and response_format ("mp3")
+    // Use allowed voice ("ash") and response_format ("mp3")
     const audioResponse = await openai.audio.speech.create({
       input: replyText,
-      voice: "nova",
+      voice: "echo",
       language: "en",
       response_format: "mp3",
       model: "gpt-4o-mini-tts",
@@ -325,10 +325,10 @@ app.post('/api/start', async (req, res) => {
 	const title = req.body.title;
 	const explanation = req.body.explanation;
 	const examples = req.body.examples;
-	const constraints = req.body.constraints;
 
 	try {
-		const aiResponse = await getAIResponse(type, req.session.summarizedHistory, title, explanation, examples, constraints);
+		const aiResponse = await getAIResponse(type, req.session.summarizedHistory, title, explanation, examples);
+    const replyText = aiResponse.content;
   
 		// add the AI's response to the conversation history
 		req.session.conversationHistory.push({
@@ -337,8 +337,17 @@ app.post('/api/start', async (req, res) => {
 		});
   
 		req.session.summarizedHistory = await summarize(req.session.conversationHistory);
-  
-		res.json({ response: aiResponse });
+
+    const audioResponse = await openaiTTS.audio.speech.create({
+      input: replyText,
+      voice: "echo",
+      language: "en",
+      response_format: "mp3",
+      model: "gpt-4o-mini-tts",
+      stream: true
+    });
+
+    await streamToResponse(audioResponse, res);
 	} catch (error) {
 		res.status(500).json({ error: "bad AI submission" });
 	}
