@@ -8,6 +8,8 @@ const fs = require('fs');
 const { OpenAI } = require('openai');
 const axios = require('axios')
 const http = require('http');
+const { Readable } = require('stream');
+
 
 
 const { getAIResponse } = require(path.join(__dirname, 'reviewCode.js'))
@@ -17,7 +19,8 @@ const httpAgent = new http.Agent({ keepAlive: true });
 
 const axiosInstance = axios.create({
   httpAgent,
-  timeout: 10000
+  timeout: 10000,
+  retry: 3
 });
 
 const upload = multer({ 
@@ -65,12 +68,52 @@ io.on('connection', (socket) => {
   });
 });
 
+const streamToResponse = async (audioResponse, res) => {
+  // Set header for MP3 audio
+  res.setHeader('Content-Type', 'audio/mpeg');
+
+  try {
+    // First, check if the response data is a stream
+    if (audioResponse.data && typeof audioResponse.data.pipe === 'function') {
+      console.log("✅ Streaming MP3 audio back to frontend");
+      audioResponse.data.pipe(res);
+    }
+    // Next, check if we can get an arrayBuffer from the response
+    else if (audioResponse.arrayBuffer && typeof audioResponse.arrayBuffer === 'function') {
+      console.log("✅ Converting arrayBuffer to Buffer and streaming");
+      const arrayBuffer = await audioResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const stream = new Readable();
+      stream.push(buffer);
+      stream.push(null);
+      stream.pipe(res);
+    }
+    // If the response is already a Buffer, stream it directly
+    else if (Buffer.isBuffer(audioResponse)) {
+      console.log("✅ Audio response is a Buffer. Streaming directly.");
+      const stream = new Readable();
+      stream.push(audioResponse);
+      stream.push(null);
+      stream.pipe(res);
+    } else {
+      throw new Error("TTS response is not streamable.");
+    }
+  } catch (error) {
+    console.error('Error streaming audio:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Streaming error',
+        details: error.message
+      });
+    }
+  }
+};
 
 // leetcode proxy
 app.use(cors());
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   console.log("🎙️ Incoming transcription request");
-  
+
   if (!req.file) {
     console.log("❌ No audio file provided");
     return res.status(400).json({ error: 'No audio file provided' });
@@ -90,10 +133,10 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     console.log("✅ Transcription success:", transcriptText);
 
-    io.emit('transcription', {
-      text: transcriptText,
-      isFinal: true
-    });
+    // io.emit('transcription', {
+    //   text: transcriptText,
+    //   isFinal: true
+    // });
 
     console.log("📬 Forwarding transcript to /api/answer-question...");
     const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
@@ -105,32 +148,17 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     console.log("🧠 Received AI reply:", replyText);
 
     console.log("🗣️ Generating TTS via OpenAI...");
+    // Use allowed voice ("nova") and response_format ("mp3")
     const audioResponse = await openai.audio.speech.create({
       input: replyText,
-      voice: "santa",
+      voice: "nova",
       language: "en",
       response_format: "mp3",
-      model: "tts-1",
+      model: "gpt-4o-mini-tts",
+      stream: true,
     });
-
-    // Convert response to ArrayBuffer and then Buffer
-    if (typeof audioResponse.arrayBuffer === 'function') {
-      const arrayBuffer = await audioResponse.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Content-Length', buffer.length);
-      console.log("✅ Sending MP3 buffer back to frontend");
-      return res.end(buffer); // return here to prevent sending another response
-    } else if (audioResponse.data) {
-      // For axios-like response with binary data
-      const buffer = Buffer.from(audioResponse.data, 'binary');
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Content-Length', buffer.length);
-      console.log("✅ Sending MP3 buffer back to frontend");
-      return res.end(buffer); // return here to prevent sending another response
-    } else {
-      throw new Error("TTS response format not recognized.");
-    }
+    await streamToResponse(audioResponse, res);
+    
   } catch (error) {
     console.error('❌ Transcribe endpoint failed:', error);
     return res.status(500).json({
@@ -144,6 +172,9 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }
   }
 });
+
+
+
 
 
 
