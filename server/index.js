@@ -1,9 +1,9 @@
 const path = require("path")
 const express = require("express")
+const session = require('express-session')
 const cors = require("cors")
-const { getAIResponse } = require('./reviewCode.js')
-const { summarize } = require('./summarize')
-
+const { getAIResponse } = require(path.join(__dirname, 'reviewCode.js'))
+const { summarize } = require(path.join(__dirname, 'summarize'));
 const app = express()
 
 app.use(express.urlencoded({extended: false}))
@@ -11,6 +11,12 @@ app.use(express.json())
 app.use(express.static(path.join(__dirname, "public")))
 
 const PORT = process.env.PORT || 3000
+
+app.use(session({
+  secret: 'secret-key', // change to actual secret key in prod
+  resave: false,
+  saveUninitialized: true
+}))
 
 // leetcode proxy
 app.use(cors());
@@ -87,13 +93,14 @@ app.get('/api/problem/:id', (req, res) => {
           res.status(500).json({ error: "bad AI submission" })
         }
   })
+
 // answer a (interview) question that the AI asked
 app.post('/api/answer-question', async (req, res) => {
 
   // make the conversation history for a new session
   if (!req.session.conversationHistory) {
-      req.session.conversationHistory = [];
-      req.session.summarizedHistory = "";
+    req.session.conversationHistory = [];
+    req.session.summarizedHistory = "";
   }
 
   const answer = req.body.answer;
@@ -120,6 +127,8 @@ app.post('/api/answer-question', async (req, res) => {
       res.status(500).json({ error: "bad AI submission" });
   }
 });
+
+
 
 app.get("^/$|/index(.html)?", (req, res) => {
     res.sendFile(path.join(__dirname, "views", "index.html")) 
