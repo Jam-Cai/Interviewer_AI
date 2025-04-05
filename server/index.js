@@ -104,6 +104,7 @@ app.post('/api/answer-question', async (req, res) => {
   }
 
   const answer = req.body.answer;
+  const highlight = req.body.highlight
 
   // add the candidate's answer into the conversation history
   req.session.conversationHistory.push({
@@ -112,7 +113,7 @@ app.post('/api/answer-question', async (req, res) => {
   });
 
   try {
-      const aiResponse = await getAIResponse(answer, req.session.summarizedHistory);
+      const aiResponse = await getAIResponse(answer, highlight, req.session.summarizedHistory);
 
       // add the AI's response to the conversation history
       req.session.conversationHistory.push({
