@@ -220,23 +220,17 @@ app.get('/api/problem/:id', (req, res) => {
       }
   
 	  const type = "submit-code"
-      const title = req.body.title;
-      const explanation = req.body.explanation;
-      const examples = req.body.examples;
-      const constraints = req.body.constraints;
       const code = req.body.code;
   
       // add user's input into the conversation history
       req.session.conversationHistory.push({
           "role": 'user',
           "content": 
-          `Here is the question and solution:
-          \nTitle: ${title}\nExplanation: ${explanation}\nExamples: ${examples}\nConstraints: ${constraints}\n 
-          Solution:\n${code}`
+          `Here is the code the user submitted:\n${code}`
         })
   
       try {
-          const aiResponse = await getAIResponse(type, req.session.summarizedHistory, title, explanation, examples, constraints, code)
+          const aiResponse = await getAIResponse(type, req.session.summarizedHistory, code)
   
           // add the AI's output in the conversation history
           req.session.conversationHistory.push({
