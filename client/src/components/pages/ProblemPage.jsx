@@ -182,7 +182,8 @@ function ProblemPage() {
       const response = await axios.post('http://localhost:3000/api/start', {
         title: problem.title,
         explanation: problem.explanation,
-        examples: problem.examples
+        examples: problem.examples,
+        withCredentials: true
       }, {
         responseType: 'blob' // 👈 important: expecting audio
       });

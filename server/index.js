@@ -215,6 +215,7 @@ app.get('/api/problem/:id', (req, res) => {
   
       // make the conversation history for a new session
       if (!req.session.conversationHistory) {
+          console.log("made new session");
           req.session.conversationHistory = []
           req.session.summarizedHistory = ""
       }
@@ -252,6 +253,7 @@ app.post('/api/answer-question', async (req, res) => {
 
   // make the conversation history for a new session
   if (!req.session.conversationHistory) {
+    console.log("made new session");
     req.session.conversationHistory = [];
     req.session.summarizedHistory = "";
   }
@@ -288,6 +290,7 @@ app.post('/api/end', async (req, res) => {
 
 	// make the conversation history for a new session
 	if (!req.session.conversationHistory) {
+    console.log("made new session");
 		req.session.conversationHistory = [];
 		req.session.summarizedHistory = "";
 	}
@@ -316,6 +319,7 @@ app.post('/api/start', async (req, res) => {
 
 	// make the conversation history for a new session
 	if (!req.session.conversationHistory) {
+    console.log("made new session");
 		req.session.conversationHistory = [];
 		req.session.summarizedHistory = "";
 	}
