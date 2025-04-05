@@ -2,7 +2,8 @@ import React from 'react';
 
 function ProblemDescription({ problem }) {
   return (
-    <div className="border-r-4 border-(--code-stroke) w-[80vw] p-10 pb-8 overflow-y-auto" style={{ "scrollbarColor": "var(--code-stroke) var(--background)" }} >
+    <div id="problem-description" className="h-full border-r-4 border-(--code-stroke) w-[80vw] p-10 pb-8 overflow-y-auto" style={{ "scrollbarColor": "var(--code-stroke) var(--background)" }}>
+
       <h1 className="text-[15px] border-l-4 leading-[1.15] pl-3 mr-5">Problem Description</h1>
       <h1 className="text-[25px] font-bold mt-2.5 ">{problem.id + ". " + problem.title}</h1>
 

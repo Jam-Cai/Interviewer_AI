@@ -47,8 +47,17 @@ function SelectProblem() {
 
   return (
     <>
-      {/* Container Div */}
-      <div className="h-full w-full  mt-[35vh]">
+      {/* Top Navigation */}
+      <a href="/">
+        <div className="absolute top-0 left-0 w-full justify-center flex items-center px-8 py-6 cursor-pointer">
+          <img src="/logo.png" alt="Logo" className="w-8 h-8 mr-2" />
+          <div className="text-white text-xl font-semibold">MeetCode</div>
+        </div>
+      </a>
+      
+
+      {/* Main Content */}
+      <div className="h-full w-full mt-[35vh]">
         
         <form className="flex justify-center flex-col items-center" onSubmit={(e) => e.preventDefault()}>
           {/* Select Interview Title */}

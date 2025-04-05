@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import CodeMirror from "@uiw/react-codemirror";
@@ -9,16 +10,21 @@ import { cpp } from "@codemirror/lang-cpp";
 import { java } from "@codemirror/lang-java";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
 import { Play } from "lucide-react";
+import Timer from "./Timer";
+import MuteButton from './MuteButton';
 
-function CodeEditor() {
+function CodeEditor({ hasStarted }) {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("cpp");
   const [output, setOutput] = useState("");
   const [selectedText, setSelectedText] = useState("");
+  const [fontSize, setFontSize] = useState(14);
 
   const handleCodeChange = (value) => {
     setCode(value);
   };
+
+  const navigate = useNavigate();
 
   const getLanguageExtension = () => {
     switch (language) {
@@ -57,35 +63,67 @@ function CodeEditor() {
   };
 
   return (
-    <div className="w-full p-6 pl-7 h-screen flex flex-col bg-(--background) text-white">
-    
+    <div id="code-editor" className="w-full p-6 pl-7 h-screen flex flex-col bg-(--background) text-white">
       {/* Header */}
       <div className="flex justify-between items-center border-b border-(--code-stroke) pb-3">
-        <h1 className="text-lg font-semibold">Code Editor</h1>
-        <div className="border border-(--code-stroke) pr-2 pl-1 py-1 rounded-sm">
-          <select
-            className="bg-transparent text-sm outline-none cursor-pointer px-1 pr-2"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
-            <option value="cpp">C++</option>
-            <option value="python">Python</option>
-            <option value="java">Java</option>
-            <option value="javascript">JavaScript</option>
-          </select>
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold">Code Editor</h1>
+          <div className="ml-3 flex items-center space-x-3">
+            <Timer hasStarted={hasStarted} />
+            <button
+              className="bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white"
+              onClick={() => navigate("/")}
+            >
+              DONE INTERVIEW
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Font Size Buttons */}
+          <div className="flex mr-1">
+            <button
+              onClick={() => setFontSize((prev) => Math.max(prev - 2, 12))}
+              className="cursor-pointer w-6 h-6 flex items-center justify-center rounded-full hover:bg-(--code-stroke)/20 text-white text-lg font-bold"
+              title="Decrease Font Size"
+            >
+              −
+            </button>
+            <button
+              onClick={() => setFontSize((prev) => Math.min(prev + 2, 20))}
+              className="cursor-pointer w-6 h-6 flex items-center justify-center rounded-full hover:bg-(--code-stroke)/20 text-white text-lg font-bold"
+              title="Increase Font Size"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Language Selector */}
+          <div className="border border-(--code-stroke) pr-2 pl-1 py-1 rounded-sm">
+            <select
+              className="bg-transparent text-sm outline-none cursor-pointer px-1 pr-2"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+            >
+              <option value="cpp">C++</option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="javascript">JavaScript</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Code Editor Wrapper */}
+      {/* Code Editor */}
       <div className="mt-3 relative flex-1 border border-(--code-stroke) rounded-sm overflow-hidden">
         <CodeMirror
           value={code}
-          className="w-full h-full text-sm"
+          className="w-full h-full"
           height="100%"
           theme={vscodeDark}
           extensions={[getLanguageExtension(), basicSetup, EditorView.lineWrapping]}
           onChange={handleCodeChange}
-          // text highlighting
+          style={{ fontSize: `${fontSize}px` }}
           onUpdate={(viewUpdate) => {
             const { state } = viewUpdate.view;
             const selection = state.selection.main;
@@ -97,20 +135,17 @@ function CodeEditor() {
 
             for (let lineNumber = fromLine.number; lineNumber <= toLine.number; lineNumber++) {
               const line = state.doc.line(lineNumber);
-              
-              // Determine the selection range within the line
+
               const lineStart = line.from;
               const lineEnd = line.to;
 
               const selectionStart = Math.max(selection.from, lineStart);
               const selectionEnd = Math.min(selection.to, lineEnd);
 
-              // Extract before, highlighted, and after parts
               const before = state.sliceDoc(lineStart, selectionStart);
               const highlighted = state.sliceDoc(selectionStart, selectionEnd);
               const after = state.sliceDoc(selectionEnd, lineEnd);
 
-              // Only include the line if there's highlighted text
               if (highlighted.trim().length > 0) {
                 selectedLines.push(`${line.number}: ${before}<highlighted>${highlighted}</highlighted>${after}`);
               }
@@ -122,8 +157,9 @@ function CodeEditor() {
 
         {/* Floating Run Button */}
         <button
+          id="run-button"
           onClick={compileCode}
-          className="outline-none absolute bottom-4 right-4 w-9 h-9 flex items-center justify-center bg-green-600 rounded-full hover:bg-green-500 transition-shadow shadow-md hover:shadow-lg cursor-pointer"
+          className="hover:scale-105 transition-all absolute bottom-4 right-4 w-9 h-9 flex items-center justify-center bg-green-600 rounded-full hover:bg-green-500 shadow-md cursor-pointer"
         >
           <Play size={18} />
         </button>
@@ -132,14 +168,11 @@ function CodeEditor() {
       {/* Output Section */}
       <div className="mt-4 bg-(--code-fill) p-3 rounded-sm border border-(--code-stroke) max-h-40 overflow-y-auto">
         <h3 className="text-[14px] font-bold text-(--code-text)">Output:</h3>
-        <pre className="text-[13px] text-(--code-text) font-thin whitespace-pre-wrap">{output}</pre>
+        <pre className="text-[14px] text-(--code-text) font-thin whitespace-pre-wrap">{output}</pre>
       </div>
 
-      {/* DELETE LATER -> Demo Selected */}
-      {/* <div className="mt-4 bg-gray-800 p-3 rounded-sm border border-gray-600 max-h-20 overflow-y-auto">
-        <h3 className="text-sm font-semibold text-gray-300">Selected Text:</h3>
-        <pre className="text-sm text-gray-300 whitespace-pre-wrap">{selectedText || "No selection"}</pre>
-      </div> */}
+      {/* Mute Button */}
+      <MuteButton hasStarted={hasStarted} />
     </div>
   );
 }

@@ -4,11 +4,13 @@ import axios from "axios";
 
 import ProblemDescription from '../components/ProblemDescription';
 import CodeEditor from '../components/CodeEditor';
+import StartOverlay from '../components/StartOverlay';
 
 function ProblemPage() {
   const { id } = useParams(); 
   const [problem, setProblem] = useState(null);
   const [error, setError] = useState('Loading problem details...');
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     const fetchProblem = async () => {
@@ -30,11 +32,14 @@ function ProblemPage() {
   return (
     <div className="flex flex-row h-screen">
 
+      {/* SHOW OVERLAY IF NOT STARTED */}
+      {!started && <StartOverlay onStart={() => setStarted(true)} />}
+
       {/* Problem Description */}
       <ProblemDescription problem={problem} />
 
       {/* Code Editor */}
-      <CodeEditor />
+      <CodeEditor hasStarted={started} />
 
     </div>
   );

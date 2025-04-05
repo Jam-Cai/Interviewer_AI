@@ -7,6 +7,8 @@
   --red:rgb(247, 91, 91);
   --code-fill: #252526;
   --code-stroke:rgb(89, 92, 96);
+  --mute-bg:rgb(89, 92, 96);
+  --mute-bg-light:rgb(52, 53, 55);
   --code-text: #D4D4D4;
 }
 
