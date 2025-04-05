@@ -2,8 +2,45 @@ const path = require("path")
 const express = require("express")
 const session = require('express-session')
 const cors = require("cors")
+const multer = require('multer');
+const socketIO = require('socket.io');
+const fs = require('fs');
+const { OpenAI } = require('openai');
+const axios = require('axios')
+const http = require('http');
+
+
 const { getAIResponse } = require(path.join(__dirname, 'reviewCode.js'))
 const { summarize } = require(path.join(__dirname, 'summarize'));
+
+const httpAgent = new http.Agent({ keepAlive: true });
+
+const axiosInstance = axios.create({
+  httpAgent,
+  timeout: 10000
+});
+
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+const lf_apikey = process.env.LEMONFOX_KEY;
+const oa_apikey = process.env.OPENAI_KEY
+if (!lf_apikey) {
+  console.error("API key not found! Please set LEMONFOX_KEY or OPENAI_KEY in your .env file.");
+  process.exit(1);
+}
+
+const openai = new OpenAI({
+  apiKey: lf_apikey,
+  baseURL: "https://api.lemonfox.ai/v1",
+});
+
+const openaiTTS = new OpenAI({
+  apiKey : oa_apikey
+})
+
 const app = express()
 
 app.use(express.urlencoded({extended: false}))
@@ -17,9 +54,99 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }))
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+
+const io = socketIO(server);
+io.on('connection', (socket) => {
+  console.log('Client connected');
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
+
 
 // leetcode proxy
 app.use(cors());
+app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
+  console.log("🎙️ Incoming transcription request");
+  
+  if (!req.file) {
+    console.log("❌ No audio file provided");
+    return res.status(400).json({ error: 'No audio file provided' });
+  }
+
+  try {
+    console.log("📤 Sending file to Whisper for transcription...");
+    const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(req.file.path),
+      model: "whisper-1",
+      language: "en",
+      prompt: "ignore sounds that are quiet, you are transcribing someone who is an interviewee for a pair programming coding interview"
+    });
+
+    const transcriptText = transcription.text;
+    if (!transcriptText) throw new Error('⚠️ No transcription returned');
+
+    console.log("✅ Transcription success:", transcriptText);
+
+    io.emit('transcription', {
+      text: transcriptText,
+      isFinal: true
+    });
+
+    console.log("📬 Forwarding transcript to /api/answer-question...");
+    const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
+      answer: transcriptText,
+      highlight: ""
+    });
+
+    const replyText = answerResponse.data.response.content;
+    console.log("🧠 Received AI reply:", replyText);
+
+    console.log("🗣️ Generating TTS via OpenAI...");
+    const audioResponse = await openai.audio.speech.create({
+      input: replyText,
+      voice: "santa",
+      language: "en",
+      response_format: "mp3",
+      model: "tts-1",
+    });
+
+    // Convert response to ArrayBuffer and then Buffer
+    if (typeof audioResponse.arrayBuffer === 'function') {
+      const arrayBuffer = await audioResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', buffer.length);
+      console.log("✅ Sending MP3 buffer back to frontend");
+      return res.end(buffer); // return here to prevent sending another response
+    } else if (audioResponse.data) {
+      // For axios-like response with binary data
+      const buffer = Buffer.from(audioResponse.data, 'binary');
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', buffer.length);
+      console.log("✅ Sending MP3 buffer back to frontend");
+      return res.end(buffer); // return here to prevent sending another response
+    } else {
+      throw new Error("TTS response format not recognized.");
+    }
+  } catch (error) {
+    console.error('❌ Transcribe endpoint failed:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      details: error.message || 'Unknown error'
+    });
+  } finally {
+    // Cleanup uploaded file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+  }
+});
+
+
+
 
 app.get('/leetcode/problems', async (req, res) => {
   try {
@@ -209,5 +336,6 @@ app.all("*", (req, res) => {
     }
 })
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+
+
 
