@@ -10,6 +10,19 @@ app.use(express.static(path.join(__dirname, "public")))
 
 const PORT = process.env.PORT || 3000
 
+// leetcode proxy
+app.use(cors());
+
+app.get('/leetcode/problems', async (req, res) => {
+  try {
+    const response = await fetch('https://leetcode.com/api/problems/all/');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to fetch LeetCode API' });
+  }
+});
+
 // get all leetcode problems
 app.get('/api/problems', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dataset', 'problems.json'));

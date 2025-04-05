@@ -2,7 +2,7 @@ import React from 'react';
 
 function ProblemDescription({ problem }) {
   return (
-    <div className="border-r-4 border-(--border) w-full p-10 pb-8 overflow-y-auto" style={{ "scrollbar-color": "var(--code-stroke) var(--background)" }} >
+    <div className="border-r-4 border-(--code-stroke) w-[80vw] p-10 pb-8 overflow-y-auto" style={{ "scrollbarColor": "var(--code-stroke) var(--background)" }} >
       <h1 className="text-[15px] border-l-4 leading-[1.15] pl-3 mr-5">Problem Description</h1>
       <h1 className="text-[25px] font-bold mt-2.5 ">{problem.id + ". " + problem.title}</h1>
 
@@ -30,7 +30,7 @@ function ProblemDescription({ problem }) {
           <div key={index}>
             <h1 className="text-[15px] font-bold mb-2">{problem.examples.length > 1 ? `Example ${index + 1}` : 'Example'}</h1>
 
-            <div className="p-2 pl-4 mb-7 mr-5 bg-(--code-fill) rounded-lg border-(--code-stroke) border-3">
+            <div className="p-2 pl-4 mb-7 mr-5 bg-(--code-fill) rounded-lg border-(--code-stroke) border-2">
               <code className="text-[13px] text-(--code-text)">
               {example.split('\n').map((line, lineIndex) => (
                 <React.Fragment key={lineIndex}>
