@@ -74,7 +74,7 @@ function SelectProblem() {
           {/* Start Interview Button */}
           <button 
             onClick={handleSubmit}
-            className="mt-4 w-100 p-2 border-3 border-(--orange) rounded-[50px] bg-(--orange) hove:bg-(--background) text-(--background) hover:text-(--orange) hover:bg-(--background) transition duration-300 cursor-pointer"
+            className="mt-4 w-100 p-2 border-3 border-(--orange) rounded-[50px] bg-(--orange) text-(--background) transition duration-300 cursor-pointer"
           >
             Start Interview
           </button>
