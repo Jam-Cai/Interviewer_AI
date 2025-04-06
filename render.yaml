@@ -19,13 +19,15 @@ services:
         sync: false
       - key: OPENAI_KEY
         sync: false
+      - key: SESSION_SECRET
+        generateValue: true
     healthCheckPath: /api/problems
     autoDeploy: true
 
   - type: web
     name: ai-interviewer-client
     env: static
-    buildCommand: cd client && npm install && npm run build
+    buildCommand: cd client && rm -rf node_modules package-lock.json && npm cache clean --force && npm install && npm run build
     staticPublishPath: ./client/dist
     routes:
       - type: rewrite
