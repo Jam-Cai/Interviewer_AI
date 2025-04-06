@@ -30,8 +30,9 @@ require('dotenv').config()
             role: 'user',
             content: 
             `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill, but 
-            dont explictily state this goal. If their code is incorrect, ask them questions to guide them but never reveal the answer.
-            If their code is correct, ask them one or two concise questions about run time and design choices.
+            dont explictily state this goal. 
+            If the user is asking a question, answer their question without giving away the answer.
+            Also guide the user towards the answer as if you were testing their problem solving skills.
             Always refer to the user in the second person.
             Please base your responses off of the following conversation history so far,
             which will include the coding question: ${history}\n
@@ -64,9 +65,10 @@ require('dotenv').config()
               role: 'user',
               content: 
               `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
-              but dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
+              but dont explictily state this goal.
+              If the user is asking a question, answer their question without giving away the answer.
+              Also guide the user towards the answer as if you were testing their problem solving skills.
               Always refer to the user in the second person.
-              The user has just responded to a question you asked. 
               Please respond based on this conversation history: ${history}\n
               ${codePrompt}\n
               Here's what the candidate just said in response to your question: ${answer}`
@@ -84,9 +86,10 @@ require('dotenv').config()
               role: 'user',
               content: 
               `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
-              but dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
+              but dont explictily state this goal.
+              If the user is asking a question, answer their question without giving away the answer.
+              Also guide the user towards the answer as if you were testing their problem solving skills.
               Always refer to the user in the second person.
-              The user has just responded to a question you asked. 
               Please respond based on this conversation history: ${history}\n
               ${codePrompt}\n
               The candidate has highlighted some part of their code. You can decide if you want to reference this if it is relevant: 
@@ -111,7 +114,7 @@ require('dotenv').config()
               role: 'user',
               content: 
               `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
-              but dont explictily state this goal. The interview is now over, so you should summarize how it went and end it. 
+              but dont explictily state this goal. The interview is now over, so you should concisely summarize how it went and end it. 
               After this, there will be no more conversation between the candidate and you.
               Always refer to the user in the second person.
               Please base your responses off of the following conversation history of the interview: ${history}
