@@ -23,6 +23,8 @@ const axiosInstance = axios.create({
   retry: 3
 });
 
+const app = express()
+
 const upload = multer({ 
   dest: 'uploads/',
   limits: { 
@@ -65,8 +67,6 @@ const openai = new OpenAI({
 // const openaiTTS = new OpenAI({
 //   apiKey : oa_apikey
 // })
-
-const app = express()
 
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
