@@ -32,7 +32,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
     if (status == "Ready to record" && !isMuted) {
       startRecording();
     }
-  }, [status]);
+  }, [status, isMuted]);
 
   // Keyboard shortcut (Ctrl + D)
   useEffect(() => {

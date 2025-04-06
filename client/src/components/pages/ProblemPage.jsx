@@ -237,10 +237,10 @@ function ProblemPage() {
 
       {/* Problem Description */}
       <ProblemDescription problem={problem} />
-      <p>{averageVolume}</p>
+      
       {/* Code Editor */}
       <CodeEditor hasStarted={started} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} status={status} endTranscription={endTranscription}/>
-xw
+
     </div>
   );
 }

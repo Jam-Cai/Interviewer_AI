@@ -21,13 +21,35 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   const [output, setOutput] = useState("");
   const [selectedText, setSelectedText] = useState("");
   const [fontSize, setFontSize] = useState(14);
-  const [language, setLanguage] = useState("javascript"); 
+  const [language, setLanguage] = useState("cpp"); 
   const {highlighted, setHighlighted} = useHighlighted("");
 
 
   const handleCodeChange = (value) => {
     setCode(value);
   };
+
+  const handleDoneInterview = async () => {
+    try {
+      const response = await axios.post("http://localhost:3000/api/end", {}, {
+        responseType: 'blob', // 👈 important: expecting audio
+        withCredentials: true
+      });
+
+      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+  
+      // Wait for audio to finish before navigating
+      audio.onended = () => {
+        navigate("/");
+      };
+    } catch (error) {
+      console.error("Error ending interview:", error);
+      navigate("/"); // fallback navigate
+    }
+  };  
 
   const navigate = useNavigate();
 
@@ -81,7 +103,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
             <Timer hasStarted={hasStarted} />
             <button
               className="bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white"
-              onClick={() => navigate("/")}
+              onClick={handleDoneInterview}
             >
               DONE INTERVIEW
             </button>

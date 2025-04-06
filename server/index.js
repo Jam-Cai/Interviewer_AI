@@ -319,6 +319,7 @@ app.post('/api/end', async (req, res) => {
 
 	try {
 		const aiResponse = await getAIResponse(type, req.session.summarizedHistory);
+    const replyText = aiResponse.content;
   
 		// add the AI's response to the conversation history
 		req.session.conversationHistory.push({
@@ -327,8 +328,17 @@ app.post('/api/end', async (req, res) => {
 		});
   
 		req.session.summarizedHistory = await summarize(req.session.conversationHistory);
-  
-		res.json({ response: aiResponse });
+
+    const audioResponse = await openai.audio.speech.create({
+      input: replyText,
+      voice: VOICE,
+      language: "en",
+      response_format: "mp3",
+      model: "gpt-4o-mini-tts",
+      stream: true
+    });
+
+    await streamToResponse(audioResponse, res);
 	} catch (error) {
 		res.status(500).json({ error: "bad AI submission" });
 	}

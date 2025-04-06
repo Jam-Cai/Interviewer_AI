@@ -63,7 +63,7 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill,
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
               but dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
               Always refer to the user in the second person.
               The user has just responded to a question you asked. 
@@ -83,7 +83,7 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill,
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
               but dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
               Always refer to the user in the second person.
               The user has just responded to a question you asked. 
@@ -110,11 +110,13 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill,
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
               but dont explictily state this goal. The interview is now over, so you should summarize how it went and end it. 
               After this, there will be no more conversation between the candidate and you.
               Always refer to the user in the second person.
-              Please base your responses off of the following conversation history of the interview: ${history}`
+              Please base your responses off of the following conversation history of the interview: ${history}
+              If there is nothing to evaluate or the candidate didn't do well, do not pretend they did. Do not be rude, but 
+              exclusively be honest`
             }
           ]
         })
@@ -133,15 +135,15 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill, 
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill, 
               but dont explictily state this goal. You will start the interview by yourself as the interviewer named MeetCode. 
               Introduce the coding question concisely. After introductions, focus only on the coding question.
               Ask the candidate to start coding, and ask the candidate to explain as they code when relevant.
-              Mention that if the candidate wants to point out a specific part of their code to you, 
-              the candidate can highlight the code when they unmute and talk.
+              Mention that if the user wishes to talk to you, they should unmute, and that you will respond ONCE they mute, and that you can
+              see any highlighted code once they hit mute.
               Always refer to the user in the second person.
               Here is the question:
-              \nTitle: ${title}\nExplanation: ${explanation}\nConstraints: ${constraints}\n `
+              \nTitle: ${title}\nExplanation: ${explanation}\nConstraints: ${constraints}\n`
             }
           ]
         })
