@@ -50,7 +50,7 @@ app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "public")))
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT
 
 app.use(session({
   secret: 'secret-key', // change to actual secret key in prod
