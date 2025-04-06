@@ -27,7 +27,7 @@ services:
   - type: web
     name: ai-interviewer-client
     env: static
-    buildCommand: cd client && rm -rf node_modules package-lock.json && npm cache clean --force && npm install && npm install @vitejs/plugin-react --save-dev && npm run build
+    buildCommand: cd client && rm -rf node_modules package-lock.json && npm cache clean --force && npm install && npm install vite @vitejs/plugin-react --save-dev && npm run build
     staticPublishPath: ./client/dist
     routes:
       - type: rewrite
