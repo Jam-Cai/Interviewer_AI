@@ -20,7 +20,8 @@ const httpAgent = new http.Agent({ keepAlive: true });
 const axiosInstance = axios.create({
   httpAgent,
   timeout: 86400000,
-  retry: 3
+  retry: 3,
+  baseURL: process.env.NODE_ENV === 'production' ? '' : `http://localhost:${process.env.PORT}`
 });
 
 const app = express()
@@ -75,9 +76,14 @@ app.use(express.static(path.join(__dirname, "public")))
 const PORT = process.env.PORT
 
 app.use(session({
-  secret: 'secret-key', // change to actual secret key in prod
+  secret: process.env.SESSION_SECRET || 'secret-key',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }))
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 
@@ -227,7 +233,8 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }, {
       withCredentials: true,
       headers: {
-        Cookie: req.headers.cookie
+        Cookie: req.headers.cookie,
+        'Content-Type': 'application/json'
       }
     }).catch(err => {
       console.error('Answer-question API error:', err.response?.data || err.message);
@@ -364,6 +371,8 @@ app.post('/api/submit-code', async (req, res) => {
 
 // answer a (interview) question that the AI asked
 app.post('/api/answer-question', async (req, res) => {
+  console.log("📝 Incoming answer-question request");
+  console.log("Request body:", req.body);
 
   // make the conversation history for a new session
   if (!req.session.conversationHistory) {
@@ -373,31 +382,39 @@ app.post('/api/answer-question', async (req, res) => {
   }
 
   const type = "answer-question"
-  const answer = req.body.answer
-  const highlight = req.body.highlight
-  const code = req.body.code
+  const answer = req.body.answer || '';
+  const highlight = req.body.highlight || '';
+  const code = req.body.code || '';
 
   // add the candidate's answer into the conversation history
   req.session.conversationHistory.push({
       role: 'user',
       content: `In response to your question, the candidate answered: ${answer}.\nThe candidate's code is ${code}.\n
                 If they highlighted anything it was: ${highlight}`
-  });
+    });
 
   try {
       const aiResponse = await getAIResponse(type, req.session.summarizedHistory, answer, highlight, code);
 
-      // add the AI's response to the conversation history
-      req.session.conversationHistory.push({
-          role: 'assistant',
-          content: `Here is the AI's response to the candidate: ${aiResponse.content}`
-      });
+    if (!aiResponse || !aiResponse.content) {
+      throw new Error('Invalid AI response');
+    }
 
-      req.session.summarizedHistory = await summarize(req.session.conversationHistory);
+    // add the AI's response to the conversation history
+    req.session.conversationHistory.push({
+      role: 'assistant',
+      content: `Here is the AI's response to the candidate: ${aiResponse.content}`
+    });
 
-      res.json({ response: aiResponse });
+    req.session.summarizedHistory = await summarize(req.session.conversationHistory);
+
+    res.json({ response: aiResponse });
   } catch (error) {
-      res.status(500).json({ error: "bad AI submission" });
+    console.error('Answer-question endpoint error:', error);
+    res.status(500).json({ 
+      error: "bad AI submission",
+      details: error.message
+    });
   }
 });
 
