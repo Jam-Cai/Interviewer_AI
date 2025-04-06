@@ -6,7 +6,7 @@
         "start": "node index",
         "dev": "nodemon index.js",
         "test": "node parser.js",
-        "build:ui": "npm i && rm -rf dist && cd ../client && npm run build && cp -r dist ../server",
+        "build:ui": "npm i && rm -rf dist && cd ../client && npm i && npm run build && cp -r dist ../server",
         "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push"
     },
     "author": "",
