@@ -10,7 +10,7 @@ const axios = require('axios')
 const http = require('http');
 const { Readable } = require('stream');
 
-
+const VOICE = "echo"
 
 const { getAIResponse } = require(path.join(__dirname, 'reviewCode.js'))
 const { summarize } = require(path.join(__dirname, 'summarize.js'));
@@ -19,7 +19,7 @@ const httpAgent = new http.Agent({ keepAlive: true });
 
 const axiosInstance = axios.create({
   httpAgent,
-  timeout: 10000,
+  timeout: 86400000,
   retry: 3
 });
 
@@ -125,6 +125,9 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 
   try {
+    console.log("Provided code: \n")
+    console.log(req.body.code)
+
     console.log("📤 Sending file to Whisper for transcription...");
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(req.file.path),
@@ -146,7 +149,8 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     console.log("📬 Forwarding transcript to /api/answer-question...");
     const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
       answer: transcriptText,
-      highlight: ""
+      highlight: "",
+      code: code
     }, {
       withCredentials: true,
       headers: {
@@ -162,7 +166,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     // Use allowed voice ("ash") and response_format ("mp3")
     const audioResponse = await openai.audio.speech.create({
       input: replyText,
-      voice: "echo",
+      voice: VOICE,
       language: "en",
       response_format: "mp3",
       model: "gpt-4o-mini-tts",
@@ -357,7 +361,7 @@ app.post('/api/start', async (req, res) => {
 
     const audioResponse = await openaiTTS.audio.speech.create({
       input: replyText,
-      voice: "echo",
+      voice: VOICE,
       language: "en",
       response_format: "mp3",
       model: "gpt-4o-mini-tts",

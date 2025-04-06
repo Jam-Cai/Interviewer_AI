@@ -7,6 +7,8 @@ import CodeEditor from '../components/CodeEditor';
 import StartOverlay from '../components/StartOverlay';
 import io from 'socket.io-client';
 
+import { useCode } from '../context/useCode.jsx';
+
 function ProblemPage() {
   const { id } = useParams(); 
   const [problem, setProblem] = useState(null);
@@ -18,6 +20,9 @@ function ProblemPage() {
   const [status, setStatus] = useState('Ready to record');
   const [averageVolume, setAverageVolume] = useState(0);
   const [recording, setRecording] = useState(false);
+
+  // Code context
+  const { code } = useCode();
 
   const socketRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -122,6 +127,7 @@ function ProblemPage() {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
+        formData.append('code', code);
         try {
           // Set responseType to 'blob' so axios treats the response as binary data.
 
@@ -129,6 +135,8 @@ function ProblemPage() {
           //     headers: { "Content-Type": "multipart/form-data" },
           //     responseType: 'blob'
           //   });
+
+          // console.log(code)
 
           const response = await axios.post('http://localhost:3000/api/transcribe', formData, {
             headers: { "Content-Type": "multipart/form-data" },
@@ -144,6 +152,9 @@ function ProblemPage() {
           audio.onended = () => {
             setStatus('Ready to record');
           };
+          console.log("playing audio");
+          
+
 
           audio.play();
         } catch (err) {
@@ -222,10 +233,10 @@ function ProblemPage() {
 
       {/* Problem Description */}
       <ProblemDescription problem={problem} />
-
+      <p>{averageVolume}</p>
       {/* Code Editor */}
       <CodeEditor hasStarted={started} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} status={status} />
-
+xw
     </div>
   );
 }

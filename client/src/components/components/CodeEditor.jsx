@@ -13,12 +13,15 @@ import { Play } from "lucide-react";
 import Timer from "./Timer";
 import MuteButton from './MuteButton';
 
+import { useCode } from "../context/useCode.jsx";
+
 function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status }) {
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("cpp");
+  const {code, setCode} = useCode();
   const [output, setOutput] = useState("");
   const [selectedText, setSelectedText] = useState("");
   const [fontSize, setFontSize] = useState(14);
+  const [language, setLanguage] = useState("javascript"); 
+
 
   const handleCodeChange = (value) => {
     setCode(value);
