@@ -99,6 +99,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
       <div className="flex justify-between items-center border-b border-(--code-stroke) pb-3">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold">Code Editor</h1>
+          
           <div className="ml-3 flex items-center space-x-3">
             <Timer hasStarted={hasStarted} />
             <button
@@ -144,6 +145,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
           </div>
         </div>
       </div>
+
 
       {/* Code Editor */}
       <div className="mt-3 relative flex-1 border border-(--code-stroke) rounded-sm overflow-hidden">
@@ -203,7 +205,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
       </div>
 
       {/* Mute Button */}
-      <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} endTranscription={endTranscription}/>
+      <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} />
     </div>
   );
 }

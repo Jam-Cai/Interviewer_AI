@@ -79,11 +79,9 @@ function ProblemPage() {
     animationFrameRef.current = requestAnimationFrame(() => endTranscription(analyser, dataArray));
   };
 
-  const startRecording = async () => {
-    if (status == 'Recording in progress...' || status == 'Processing audio...') {
-      return;
-    }
+  const recordingStartTimeRef = useRef(null); 
 
+  const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -99,14 +97,17 @@ function ProblemPage() {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
+      recordingStartTimeRef.current = Date.now();
+
       mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorder.start();
       setRecording(true);
       setStatus('Recording in progress...');
-
       // Begin checking for silence
       endTranscription(analyser, dataArray);
     } catch (err) {
@@ -161,6 +162,10 @@ function ProblemPage() {
 
 
           audio.play();
+
+          if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+          }
         } catch (err) {
           console.error('Error sending audio:', err);
           setStatus('Error sending audio to server');

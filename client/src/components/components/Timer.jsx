@@ -27,7 +27,7 @@ function Timer({ hasStarted }) {
   };
 
   return (
-    <div className="bg-green-600 text-white text-xs py-1 px-3 rounded-full font-semibold">
+    <div className="bg-green-600 text-white text-xs py-1 px-3 w-13 flex justify-center rounded-full font-semibold">
       {formatTime(time)}
     </div>
   );

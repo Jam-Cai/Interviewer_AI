@@ -1,51 +1,87 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status, endTranscription }) => {
+const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status }) => {
   const [isMuted, setIsMuted] = useState(true);
   const [amplitude, setAmplitude] = useState(0);
   const [barMultipliers, setBarMultipliers] = useState([1, 1, 1]);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [overlayText, setOverlayText] = useState("");
-  const overlayTimeoutRef = useRef(null);
+  const [overlayText, setOverlayText] = useState("Recording...");
+  const isKeyPressedRef = useRef(false);
 
-  const toggleMute = () => {
-    if (!hasStarted) return;
+  const [isHovered, setIsHovered] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
 
-    const newMuted = !isMuted;
-    setIsMuted(newMuted);
-
-    // Call recording functions
-    if (newMuted) {
-      stopRecording?.();
-    } else {
-      startRecording?.();
-    }
-
-    setOverlayText(newMuted ? "Muted" : "Unmuted");
-    setShowOverlay(true);
-
-    if (overlayTimeoutRef.current) clearTimeout(overlayTimeoutRef.current);
-    overlayTimeoutRef.current = setTimeout(() => setShowOverlay(false), 2000);
+  // Add hover handlers
+  const handleMouseMove = (e) => {
+    setHoverPosition({
+      x: e.clientX + 15,
+      y: e.clientY + 15
+    });
   };
+  
 
+  const statusRef = useRef(status);
+
+  // Keep the ref updated with the latest status
   useEffect(() => {
-    if (status == "Ready to record" && !isMuted) {
-      startRecording();
-    }
-  }, [status, isMuted]);
+    statusRef.current = status;
+  }, [status]);
 
-  // Keyboard shortcut (Ctrl + D)
+  const turnOnMic = async() => {
+    setIsMuted(false);
+
+    try {
+      await startRecording(); 
+    } catch (err) {
+      console.error("Error toggling recording:", err);
+    }
+
+  }
+
+  const turnOffMic = async() => {
+    setIsMuted(true);
+
+    try {
+      await stopRecording(); 
+    } catch (err) {
+      console.error("Error toggling recording:", err);
+    }
+
+  }
+
   useEffect(() => {
     const handleKeyDown = (e) => {
+    
       if (e.metaKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
-        toggleMute();
+    
+        if (statusRef.current === "Ready to record" && !isKeyPressedRef.current) {
+          isKeyPressedRef.current = true;
+          setShowOverlay(true);
+          turnOnMic();
+        }
       }
     };
-
+  
+    const handleKeyUp = (e) => {
+      if (e.key.toLowerCase() === "d" || e.key.toLowerCase() === "meta") {
+        e.preventDefault();
+        if (isKeyPressedRef.current) {
+          isKeyPressedRef.current = false;
+          setShowOverlay(false);
+          turnOffMic();
+        }
+      }
+    };
+  
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMuted, hasStarted]);
+    window.addEventListener("keyup", handleKeyUp);
+  
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [averageVolume, hasStarted]);
 
   // Handle amplitude based on averageVolume
   useEffect(() => {
@@ -77,6 +113,23 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
 
   return (
     <>
+
+      {isHovered && !showOverlay && (
+        <div 
+          className="fixed z-50 px-3 py-2 text-sm text-black bg-white rounded-sm pointer-events-none"
+          style={{
+            left: `${hoverPosition.x-195}px`,
+            top: `${hoverPosition.y -25}px`,
+            transform: 'translateY(-50%)'
+          }}
+        >
+          Hold CTRL/CMD + D 
+          <br></br>to speak
+          <div className="absolute w-2 h-2 transform rotate-45 -right-1 top-[70%] -translate-y-1/2 bg-white" />
+        </div>
+      )}
+
+      
       {/* Mute Overlay */}
       {showOverlay && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
@@ -107,10 +160,16 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
 
         {/* Mute/Unmute Button */}
         <button
-          className="cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md hover:bg-(--red) hover:scale-102 transition-all active:scale-95 z-50"
-          onClick={toggleMute}
+          className={`cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md transition-all z-50 ${
+            !isMuted 
+              ? 'scale-105 bg-(--red) shadow-lg shadow-red-500/50'
+              : 'bg-(--mute-bg)'
+          }`}
           aria-label={isMuted ? "Unmute" : "Mute"}
           disabled={!hasStarted}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onMouseMove={handleMouseMove}
         >
           {isMuted ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,6 +183,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
           )}
         </button>
       </div>
+
     </>
   );
 };
