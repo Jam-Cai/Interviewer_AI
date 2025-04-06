@@ -111,7 +111,7 @@ const streamToResponse = async (audioResponse, res) => {
 
 // leetcode proxy
 app.use(cors({
-  origin: 'http://localhost:5173', // frontend port
+  origin: `http://localhost:${process.env.PORT}`, // frontend port
   credentials: true
 }));
 
