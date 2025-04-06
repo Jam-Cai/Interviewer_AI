@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useViewTransitionState } from "react-router-dom";
 import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import CodeMirror from "@uiw/react-codemirror";
@@ -14,13 +14,15 @@ import Timer from "./Timer";
 import MuteButton from './MuteButton';
 
 import { useCode } from "../context/useCode.jsx";
+import { useHighlighted } from "../context/useHighlighted.jsx";
 
-function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status }) {
+function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status, endTranscription }) {
   const {code, setCode} = useCode();
   const [output, setOutput] = useState("");
   const [selectedText, setSelectedText] = useState("");
   const [fontSize, setFontSize] = useState(14);
   const [language, setLanguage] = useState("javascript"); 
+  const {highlighted, setHighlighted} = useHighlighted("");
 
 
   const handleCodeChange = (value) => {
@@ -41,17 +43,20 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
 
   const getPistonLanguage = () => {
     switch (language) {
-      case "javascript": return "node";
+      case "javascript": return "javascript";
       case "python": return "python3";
       case "cpp": return "cpp";
       case "java": return "java";
-      default: return "node";
+      default: return "javascript";
     }
   };
 
   const compileCode = async () => {
     setOutput("Running...");
     try {
+      console.log(code);
+      console.log(getPistonLanguage());
+      
       const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
         language: getPistonLanguage(),
         version: "*",
@@ -147,7 +152,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
               const selectionEnd = Math.min(selection.to, lineEnd);
 
               const before = state.sliceDoc(lineStart, selectionStart);
-              const highlighted = state.sliceDoc(selectionStart, selectionEnd);
+              setHighlighted(state.sliceDoc(selectionStart, selectionEnd));
               const after = state.sliceDoc(selectionEnd, lineEnd);
 
               if (highlighted.trim().length > 0) {
@@ -176,7 +181,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
       </div>
 
       {/* Mute Button */}
-      <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} />
+      <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} endTranscription={endTranscription}/>
     </div>
   );
 }

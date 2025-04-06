@@ -8,6 +8,7 @@ import StartOverlay from '../components/StartOverlay';
 import io from 'socket.io-client';
 
 import { useCode } from '../context/useCode.jsx';
+import { useHighlighted } from '../context/useHighlighted.jsx';
 
 function ProblemPage() {
   const { id } = useParams(); 
@@ -21,8 +22,10 @@ function ProblemPage() {
   const [averageVolume, setAverageVolume] = useState(0);
   const [recording, setRecording] = useState(false);
 
-  // Code context
+  // Context Hooks
   const { code } = useCode();
+  const { highlighted } = useHighlighted();
+
 
   const socketRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -57,7 +60,7 @@ function ProblemPage() {
     };
   }, []);
 
-  const checkSilence = (analyser, dataArray) => {
+  const endTranscription = (analyser, dataArray) => {
     analyser.getByteFrequencyData(dataArray);
     const sum = dataArray.reduce((a, b) => a + b, 0);
     const avg = sum / dataArray.length;
@@ -73,7 +76,7 @@ function ProblemPage() {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
-    animationFrameRef.current = requestAnimationFrame(() => checkSilence(analyser, dataArray));
+    animationFrameRef.current = requestAnimationFrame(() => endTranscription(analyser, dataArray));
   };
 
   const startRecording = async () => {
@@ -105,7 +108,7 @@ function ProblemPage() {
       setStatus('Recording in progress...');
 
       // Begin checking for silence
-      checkSilence(analyser, dataArray);
+      endTranscription(analyser, dataArray);
     } catch (err) {
       console.error('Error accessing microphone:', err);
       setStatus('Error accessing microphone. Please check permissions.');
@@ -128,6 +131,7 @@ function ProblemPage() {
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         formData.append('code', code);
+        formData.append('highlight', highlighted);
         try {
           // Set responseType to 'blob' so axios treats the response as binary data.
 
@@ -235,7 +239,7 @@ function ProblemPage() {
       <ProblemDescription problem={problem} />
       <p>{averageVolume}</p>
       {/* Code Editor */}
-      <CodeEditor hasStarted={started} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} status={status} />
+      <CodeEditor hasStarted={started} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} status={status} endTranscription={endTranscription}/>
 xw
     </div>
   );

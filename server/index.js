@@ -40,9 +40,9 @@ const openai = new OpenAI({
   baseURL: "https://api.lemonfox.ai/v1",
 });
 
-const openaiTTS = new OpenAI({
-  apiKey : oa_apikey
-})
+// const openaiTTS = new OpenAI({
+//   apiKey : oa_apikey
+// })
 
 const app = express()
 
@@ -127,6 +127,9 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
     console.log("Provided code: \n")
     console.log(req.body.code)
+    console.log("Provided highlighted: \n")
+    console.log(req.body.highlight)
+
 
     console.log("📤 Sending file to Whisper for transcription...");
     const transcription = await openai.audio.transcriptions.create({
@@ -149,7 +152,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     console.log("📬 Forwarding transcript to /api/answer-question...");
     const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
       answer: transcriptText,
-      highlight: "",
+      highlight: req.body.highlight,
       code: req.body.code
     }, {
       withCredentials: true,
@@ -159,7 +162,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       }
     });
 
-    const replyText = answerResponse.data.response.content;
+    const replyText = answerResponse.data.response.content.split('*').join('');
     console.log("🧠 Received AI reply:", replyText);
 
     console.log("🗣️ Generating TTS via OpenAI...");
@@ -359,7 +362,7 @@ app.post('/api/start', async (req, res) => {
   
 		req.session.summarizedHistory = await summarize(req.session.conversationHistory);
 
-    const audioResponse = await openaiTTS.audio.speech.create({
+    const audioResponse = await openai.audio.speech.create({
       input: replyText,
       voice: VOICE,
       language: "en",

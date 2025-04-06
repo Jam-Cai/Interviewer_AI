@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status }) => {
+const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status, endTranscription }) => {
   const [isMuted, setIsMuted] = useState(true);
   const [amplitude, setAmplitude] = useState(0);
   const [barMultipliers, setBarMultipliers] = useState([1, 1, 1]);
