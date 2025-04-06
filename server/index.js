@@ -111,8 +111,10 @@ const streamToResponse = async (audioResponse, res) => {
 
 // leetcode proxy
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
 
@@ -150,7 +152,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     // });
 
     console.log("📬 Forwarding transcript to /api/answer-question...");
-    const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
+    const answerResponse = await axiosInstance.post(`${process.env.NODE_ENV === 'production' ? '' : 'http://localhost:' + PORT}/api/answer-question`, {
       answer: transcriptText,
       highlight: req.body.highlight,
       code: req.body.code

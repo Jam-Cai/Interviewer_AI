@@ -31,7 +31,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
 
   const handleDoneInterview = async () => {
     try {
-      const response = await axios.post("http://localhost:3000/api/end", {}, {
+      const response = await axios.post(`/api/end`, {}, {
         responseType: 'blob', // 👈 important: expecting audio
         withCredentials: true
       });
