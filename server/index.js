@@ -225,10 +225,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       highlight: req.body.highlight,
       code: req.body.code
     }, {
-      withCredentials: true,
-      headers: {
-        Cookie: req.headers.cookie
-      }
+      withCredentials: true
     }).catch(err => {
       console.error('Answer-question API error:', err.response?.data || err.message);
       throw err;
