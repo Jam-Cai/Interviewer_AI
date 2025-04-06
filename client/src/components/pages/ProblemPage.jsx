@@ -162,10 +162,6 @@ function ProblemPage() {
 
 
           audio.play();
-
-          if (mediaStream) {
-            mediaStream.getTracks().forEach(track => track.stop());
-          }
         } catch (err) {
           console.error('Error sending audio:', err);
           setStatus('Error sending audio to server');
