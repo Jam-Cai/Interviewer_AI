@@ -25,7 +25,29 @@ const axiosInstance = axios.create({
 
 const upload = multer({ 
   dest: 'uploads/',
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only audio files
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only audio files are allowed!'), false);
+    }
+  }
+});
+
+// Error handling middleware for multer
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File size too large. Maximum size is 10MB.' });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  next(err);
 });
 
 const lf_apikey = process.env.LEMONFOX_KEY;
@@ -152,7 +174,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     // });
 
     console.log("📬 Forwarding transcript to /api/answer-question...");
-    const answerResponse = await axiosInstance.post(`${process.env.NODE_ENV === 'production' ? '' : 'http://localhost:' + PORT}/api/answer-question`, {
+    const answerResponse = await axiosInstance.post('/api/answer-question', {
       answer: transcriptText,
       highlight: req.body.highlight,
       code: req.body.code
@@ -163,6 +185,10 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
         Cookie: req.headers.cookie
       }
     });
+
+    if (!answerResponse.data || !answerResponse.data.response) {
+      throw new Error('Invalid response from answer-question endpoint');
+    }
 
     const replyText = answerResponse.data.response.content.split('*').join('');
     console.log("🧠 Received AI reply:", replyText);
@@ -177,19 +203,23 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       model: "gpt-4o-mini-tts",
       stream: true,
     });
+
+    if (!audioResponse) {
+      throw new Error('Failed to generate audio response');
+    }
+
     await streamToResponse(audioResponse, res);
     
   } catch (error) {
     console.error('❌ Transcribe endpoint failed:', error);
+    // Clean up the uploaded file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
     return res.status(500).json({
       error: 'Internal Server Error',
       details: error.message || 'Unknown error'
     });
-  } finally {
-    // Cleanup uploaded file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
   }
 });
 

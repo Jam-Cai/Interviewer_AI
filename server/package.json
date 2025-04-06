@@ -8,7 +8,7 @@
         "test": "node parser.js",
         "build:ui": "npm i && rm -rf dist && cd ../client && npm i && npm run build && cp -r dist ../server",
         "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push",
-        "postinstall": "mkdir -p uploads"
+        "postinstall": "mkdir -p uploads && chmod 777 uploads"
     },
     "author": "",
     "license": "ISC",

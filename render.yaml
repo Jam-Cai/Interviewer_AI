@@ -19,6 +19,8 @@ services:
         sync: false
       - key: OPENAI_KEY
         sync: false
+    healthCheckPath: /api/problems
+    autoDeploy: true
 
   - type: web
     name: ai-interviewer-client
@@ -34,4 +36,5 @@ services:
         destination: https://ai-interviewer-server.onrender.com/leetcode/:splat
       - type: rewrite
         source: /*
-        destination: /index.html 
+        destination: /index.html
+    autoDeploy: true 
