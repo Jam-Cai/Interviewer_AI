@@ -20,37 +20,12 @@ const httpAgent = new http.Agent({ keepAlive: true });
 const axiosInstance = axios.create({
   httpAgent,
   timeout: 86400000,
-  retry: 3,
-  baseURL: process.env.NODE_ENV === 'production' ? '' : `http://localhost:${process.env.PORT}`
+  retry: 3
 });
-
-const app = express()
 
 const upload = multer({ 
   dest: 'uploads/',
-  limits: { 
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 1
-  },
-  fileFilter: (req, file, cb) => {
-    // Accept only audio files
-    if (file.mimetype.startsWith('audio/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only audio files are allowed!'), false);
-    }
-  }
-});
-
-// Error handling middleware for multer
-app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File size too large. Maximum size is 10MB.' });
-    }
-    return res.status(400).json({ error: err.message });
-  }
-  next(err);
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
 const lf_apikey = process.env.LEMONFOX_KEY;
@@ -69,21 +44,19 @@ const openai = new OpenAI({
 //   apiKey : oa_apikey
 // })
 
+const app = express()
+
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "public")))
+app.use(express.static(path.join(__dirname, "dist")))
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 10000
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'secret-key',
+  secret: 'secret-key', // change to actual secret key in prod
   resave: false,
-  saveUninitialized: true,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  saveUninitialized: true
 }))
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 
@@ -101,50 +74,20 @@ const streamToResponse = async (audioResponse, res) => {
   res.setHeader('Content-Type', 'audio/mpeg');
 
   try {
-    console.log('Streaming audio response...');
-    console.log('Response type:', typeof audioResponse);
-    console.log('Response data type:', typeof audioResponse.data);
-    console.log('Is stream:', audioResponse.data && typeof audioResponse.data.pipe === 'function');
-    console.log('Is arrayBuffer:', audioResponse.arrayBuffer && typeof audioResponse.arrayBuffer === 'function');
-    console.log('Is buffer:', Buffer.isBuffer(audioResponse));
-
     // First, check if the response data is a stream
     if (audioResponse.data && typeof audioResponse.data.pipe === 'function') {
       console.log("✅ Streaming MP3 audio back to frontend");
       audioResponse.data.pipe(res);
-      audioResponse.data.on('error', (err) => {
-        console.error('Error streaming audio data:', err);
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: 'Streaming error',
-            details: err.message
-          });
-        }
-      });
     }
     // Next, check if we can get an arrayBuffer from the response
     else if (audioResponse.arrayBuffer && typeof audioResponse.arrayBuffer === 'function') {
       console.log("✅ Converting arrayBuffer to Buffer and streaming");
-      try {
-        const arrayBuffer = await audioResponse.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const stream = new Readable();
-        stream.push(buffer);
-        stream.push(null);
-        stream.pipe(res);
-        stream.on('error', (err) => {
-          console.error('Error streaming converted buffer:', err);
-          if (!res.headersSent) {
-            res.status(500).json({
-              error: 'Streaming error',
-              details: err.message
-            });
-          }
-        });
-      } catch (err) {
-        console.error('Error converting arrayBuffer:', err);
-        throw err;
-      }
+      const arrayBuffer = await audioResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const stream = new Readable();
+      stream.push(buffer);
+      stream.push(null);
+      stream.pipe(res);
     }
     // If the response is already a Buffer, stream it directly
     else if (Buffer.isBuffer(audioResponse)) {
@@ -153,26 +96,15 @@ const streamToResponse = async (audioResponse, res) => {
       stream.push(audioResponse);
       stream.push(null);
       stream.pipe(res);
-      stream.on('error', (err) => {
-        console.error('Error streaming buffer:', err);
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: 'Streaming error',
-            details: err.message
-          });
-        }
-      });
     } else {
-      throw new Error("TTS response is not streamable. Response type: " + typeof audioResponse);
+      throw new Error("TTS response is not streamable.");
     }
   } catch (error) {
     console.error('Error streaming audio:', error);
-    console.error('Error stack:', error.stack);
     if (!res.headersSent) {
       res.status(500).json({
         error: 'Streaming error',
-        details: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: error.message
       });
     }
   }
@@ -180,17 +112,13 @@ const streamToResponse = async (audioResponse, res) => {
 
 // leetcode proxy
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true
 }));
 
 
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   console.log("🎙️ Incoming transcription request");
-  console.log("Request body:", req.body);
-  console.log("Request file:", req.file);
 
   if (!req.file) {
     console.log("❌ No audio file provided");
@@ -198,57 +126,48 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 
   try {
+    console.log("Provided code: \n")
+    console.log(req.body.code)
+    console.log("Provided highlighted: \n")
+    console.log(req.body.highlight)
+
+
     console.log("📤 Sending file to Whisper for transcription...");
-    console.log("File path:", req.file.path);
-    console.log("File size:", req.file.size);
-    console.log("File mimetype:", req.file.mimetype);
-
-    const fileStream = fs.createReadStream(req.file.path);
-    fileStream.on('error', (err) => {
-      console.error('Error reading file stream:', err);
-    });
-
     const transcription = await openai.audio.transcriptions.create({
-      file: fileStream,
+      file: fs.createReadStream(req.file.path),
       model: "whisper-1",
       language: "en",
       prompt: "ignore sounds that are quiet, you are transcribing someone who is an interviewee for a pair programming coding interview"
-    }).catch(err => {
-      console.error('OpenAI transcription error:', err);
-      throw err;
     });
 
-    if (!transcription || !transcription.text) {
-      throw new Error('No transcription returned from OpenAI');
-    }
-
     const transcriptText = transcription.text;
+    if (!transcriptText) throw new Error('⚠️ No transcription returned');
+
     console.log("✅ Transcription success:", transcriptText);
 
+    // io.emit('transcription', {
+    //   text: transcriptText,
+    //   isFinal: true
+    // });
+
     console.log("📬 Forwarding transcript to /api/answer-question...");
-    const answerResponse = await axiosInstance.post('/api/answer-question', {
+    const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
       answer: transcriptText,
       highlight: req.body.highlight,
       code: req.body.code
     }, {
       withCredentials: true,
       headers: {
-        Cookie: req.headers.cookie,
-        'Content-Type': 'application/json'
+        // Forward the session cookie from the original request to preserve session data.
+        Cookie: req.headers.cookie
       }
-    }).catch(err => {
-      console.error('Answer-question API error:', err.response?.data || err.message);
-      throw err;
     });
-
-    if (!answerResponse.data || !answerResponse.data.response) {
-      throw new Error('Invalid response from answer-question endpoint');
-    }
 
     const replyText = answerResponse.data.response.content.split('*').join('');
     console.log("🧠 Received AI reply:", replyText);
 
     console.log("🗣️ Generating TTS via OpenAI...");
+    // Use allowed voice ("ash") and response_format ("mp3")
     const audioResponse = await openai.audio.speech.create({
       input: replyText,
       voice: VOICE,
@@ -256,41 +175,20 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       response_format: "mp3",
       model: "gpt-4o-mini-tts",
       stream: true,
-    }).catch(err => {
-      console.error('OpenAI TTS error:', err);
-      throw err;
     });
-
-    if (!audioResponse) {
-      throw new Error('Failed to generate audio response');
-    }
-
     await streamToResponse(audioResponse, res);
     
   } catch (error) {
     console.error('❌ Transcribe endpoint failed:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      status: error.status,
-      response: error.response?.data
-    });
-
-    // Clean up the uploaded file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error cleaning up file:', unlinkError);
-      }
-    }
-
     return res.status(500).json({
       error: 'Internal Server Error',
-      details: error.message || 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: error.message || 'Unknown error'
     });
+  } finally {
+    // Cleanup uploaded file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
   }
 });
 
@@ -371,8 +269,6 @@ app.post('/api/submit-code', async (req, res) => {
 
 // answer a (interview) question that the AI asked
 app.post('/api/answer-question', async (req, res) => {
-  console.log("📝 Incoming answer-question request");
-  console.log("Request body:", req.body);
 
   // make the conversation history for a new session
   if (!req.session.conversationHistory) {
@@ -382,39 +278,31 @@ app.post('/api/answer-question', async (req, res) => {
   }
 
   const type = "answer-question"
-  const answer = req.body.answer || '';
-  const highlight = req.body.highlight || '';
-  const code = req.body.code || '';
+  const answer = req.body.answer
+  const highlight = req.body.highlight
+  const code = req.body.code
 
   // add the candidate's answer into the conversation history
   req.session.conversationHistory.push({
       role: 'user',
       content: `In response to your question, the candidate answered: ${answer}.\nThe candidate's code is ${code}.\n
                 If they highlighted anything it was: ${highlight}`
-    });
+  });
 
   try {
       const aiResponse = await getAIResponse(type, req.session.summarizedHistory, answer, highlight, code);
 
-    if (!aiResponse || !aiResponse.content) {
-      throw new Error('Invalid AI response');
-    }
+      // add the AI's response to the conversation history
+      req.session.conversationHistory.push({
+          role: 'assistant',
+          content: `Here is the AI's response to the candidate: ${aiResponse.content}`
+      });
 
-    // add the AI's response to the conversation history
-    req.session.conversationHistory.push({
-      role: 'assistant',
-      content: `Here is the AI's response to the candidate: ${aiResponse.content}`
-    });
+      req.session.summarizedHistory = await summarize(req.session.conversationHistory);
 
-    req.session.summarizedHistory = await summarize(req.session.conversationHistory);
-
-    res.json({ response: aiResponse });
+      res.json({ response: aiResponse });
   } catch (error) {
-    console.error('Answer-question endpoint error:', error);
-    res.status(500).json({ 
-      error: "bad AI submission",
-      details: error.message
-    });
+      res.status(500).json({ error: "bad AI submission" });
   }
 });
 
@@ -519,28 +407,6 @@ app.use(express.static('dist'))
 //         res.type("txt").send("404 not found")
 //     }
 // })
-
-// Global error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  console.error('Error stack:', err.stack);
-  console.error('Request details:', {
-    method: req.method,
-    url: req.url,
-    headers: req.headers,
-    body: req.body
-  });
-
-  if (res.headersSent) {
-    return next(err);
-  }
-
-  res.status(500).json({
-    error: 'Internal Server Error',
-    details: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
-});
 
 
 
