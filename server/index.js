@@ -319,7 +319,7 @@ app.post('/api/end', async (req, res) => {
 
 	try {
 		const aiResponse = await getAIResponse(type, req.session.summarizedHistory);
-    const replyText = aiResponse.content;
+    const replyText = aiResponse.content.split('*').join('');;
   
 		// add the AI's response to the conversation history
 		req.session.conversationHistory.push({
@@ -362,7 +362,7 @@ app.post('/api/start', async (req, res) => {
 
 	try {
 		const aiResponse = await getAIResponse(type, req.session.summarizedHistory, title, explanation, examples);
-    const replyText = aiResponse.content;
+    const replyText = aiResponse.content.split('*').join('');
   
 		// add the AI's response to the conversation history
 		req.session.conversationHistory.push({
@@ -388,22 +388,24 @@ app.post('/api/start', async (req, res) => {
 })
 
 
-app.get("^/$|/index(.html)?", (req, res) => {
-    res.sendFile(path.join(__dirname, "views", "index.html")) 
-})
+// app.get("^/$|/index(.html)?", (req, res) => {
+//     res.sendFile(path.join(__dirname, "views", "dist")) 
+// })
 
-// if none of the above, serve 404 page
-app.all("*", (req, res) => {
-    res.status(404)
+app.use(express.static('dist'))
+
+// // if none of the above, serve 404 page
+// app.all("*", (req, res) => {
+//     res.status(404)
     
-    if (req.accepts("html")) {
-        res.sendFile(path.join(__dirname, "views", "404.html")) 
-    } else if (req.accepts("html")) {
-        res.json({ error: "404 not found" })
-    } else {
-        res.type("txt").send("404 not found")
-    }
-})
+//     if (req.accepts("html")) {
+//         res.sendFile(path.join(__dirname, "views", "404.html")) 
+//     } else if (req.accepts("html")) {
+//         res.json({ error: "404 not foundx" })
+//     } else {
+//         res.type("txt").send("404 not found")
+//     }
+// })
 
 
 
