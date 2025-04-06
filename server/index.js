@@ -221,43 +221,43 @@ app.get('/api/problem/:id', (req, res) => {
     }
   });
 
-  // ask AI to review the code
-  app.post('/api/submit-code', async (req, res) => {
-  
-      // make the conversation history for a new session
-      if (!req.session.conversationHistory) {
-          console.log("made new session");
-          req.session.conversationHistory = []
-          req.session.summarizedHistory = ""
+// ask AI to review the code
+app.post('/api/submit-code', async (req, res) => {
+
+    // make the conversation history for a new session
+    if (!req.session.conversationHistory) {
+        console.log("made new session");
+        req.session.conversationHistory = []
+        req.session.summarizedHistory = ""
+    }
+
+    const type = "submit-code"
+    const code = req.body.code
+
+    // add user's input into the conversation history
+    req.session.conversationHistory.push({
+        "role": 'user',
+        "content": 
+        `Here is the code the user submitted:\n${code}`
+      })
+
+    try {
+        const aiResponse = await getAIResponse(type, req.session.summarizedHistory, code)
+
+        // add the AI's output in the conversation history
+        req.session.conversationHistory.push({
+            "role": 'assistant',
+            "content": `Here is the AI's response to the code the user sent to review:${aiResponse.content}`
+          })
+
+        req.session.summarizedHistory = await summarize(req.session.conversationHistory)
+
+        res.json({ response: aiResponse })
+
+      } catch (error) {
+        res.status(500).json({ error: "bad AI submission" })
       }
-  
-	  const type = "submit-code"
-      const code = req.body.code;
-  
-      // add user's input into the conversation history
-      req.session.conversationHistory.push({
-          "role": 'user',
-          "content": 
-          `Here is the code the user submitted:\n${code}`
-        })
-  
-      try {
-          const aiResponse = await getAIResponse(type, req.session.summarizedHistory, code)
-  
-          // add the AI's output in the conversation history
-          req.session.conversationHistory.push({
-              "role": 'assistant',
-              "content": `Here is the AI's response to the code the user sent to review:${aiResponse.content}`
-            })
-  
-          req.session.summarizedHistory = await summarize(req.session.conversationHistory)
-  
-          res.json({ response: aiResponse })
-  
-        } catch (error) {
-          res.status(500).json({ error: "bad AI submission" })
-        }
-  })
+})
 
 // answer a (interview) question that the AI asked
 app.post('/api/answer-question', async (req, res) => {
@@ -272,20 +272,22 @@ app.post('/api/answer-question', async (req, res) => {
   const type = "answer-question"
   const answer = req.body.answer
   const highlight = req.body.highlight
+  const code = req.body.code
 
   // add the candidate's answer into the conversation history
   req.session.conversationHistory.push({
       role: 'user',
-      content: `In response to your question, the candidate answered: ${answer}`
+      content: `In response to your question, the candidate answered: ${answer}.\nThe candidate's code is ${code}.\n
+                If they highlighted anything it was: ${highlight}`
   });
 
   try {
-      const aiResponse = await getAIResponse(type, req.session.summarizedHistory, answer, highlight);
+      const aiResponse = await getAIResponse(type, req.session.summarizedHistory, answer, highlight, code);
 
       // add the AI's response to the conversation history
       req.session.conversationHistory.push({
           role: 'assistant',
-          content: `Here is the AI's response to the candidate's answer: ${aiResponse.content}`
+          content: `Here is the AI's response to the candidate: ${aiResponse.content}`
       });
 
       req.session.summarizedHistory = await summarize(req.session.conversationHistory);

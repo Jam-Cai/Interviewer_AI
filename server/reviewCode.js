@@ -29,11 +29,12 @@ require('dotenv').config()
           {
             role: 'user',
             content: 
-            `You are a peer programming interviewer. Talk with the goal of evaluating the candidate's technical skill, but 
+            `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill, but 
             dont explictily state this goal. If their code is incorrect, ask them questions to guide them but never reveal the answer.
             If their code is correct, ask them one or two concise questions about run time and design choices.
             Always refer to the user in the second person.
-            Please base your responses off of the following conversation history so far, which will include the coding question: ${history}
+            Please base your responses off of the following conversation history so far,
+            which will include the coding question: ${history}\n
             Here is the candidate's solution:\n${code}`
           }
         ]
@@ -43,6 +44,15 @@ require('dotenv').config()
     } else if (type == "answer-question") {
       answer = args[2]
       highlight = args[3]
+      code = args[4]
+
+      let codePrompt
+
+      if (code == undefined || code.trim === '') {
+        codePrompt = "The candidate has not yet entered any code. You should prompt them to do so."
+      } else {
+        codePrompt = `This is all the code that the candidate has written so far: ${code}`
+      }
 
       // if the user did not highlight any text
       if (highlight == undefined) {
@@ -53,11 +63,12 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a peer programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill, but 
-              dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill,
+              but dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
               Always refer to the user in the second person.
               The user has just responded to a question you asked. 
-              Please respond based on this conversation history: ${history}
+              Please respond based on this conversation history: ${history}\n
+              ${codePrompt}\n
               Here's what the candidate just said in response to your question: ${answer}`
             }
           ]
@@ -72,12 +83,14 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a peer programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill, but 
-              dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill,
+              but dont explictily state this goal. Ask them questions to guide them but never reveal the answer.
               Always refer to the user in the second person.
               The user has just responded to a question you asked. 
-              Please respond based on this conversation history: ${history}
-              The candidate may have highlighted some part of their code. You can decide if you want to reference this: ${highlight}
+              Please respond based on this conversation history: ${history}\n
+              ${codePrompt}\n
+              The candidate has highlighted some part of their code. You can decide if you want to reference this if it is relevant: 
+              ${highlight}\n
               Here's what the candidate just said in response to your question: ${answer}`
             }
           ]
@@ -97,8 +110,8 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a peer programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill, but 
-              dont explictily state this goal. The interview is now over, so you should summarize how it went and end it. 
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill,
+              but dont explictily state this goal. The interview is now over, so you should summarize how it went and end it. 
               After this, there will be no more conversation between the candidate and you.
               Always refer to the user in the second person.
               Please base your responses off of the following conversation history of the interview: ${history}`
@@ -120,9 +133,12 @@ require('dotenv').config()
             {
               role: 'user',
               content: 
-              `You are a peer programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill, but 
-              dont explictily state this goal. You will start the interview by yourself as the interviewer named MeetCode. 
+              `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's character and technical skill, 
+              but dont explictily state this goal. You will start the interview by yourself as the interviewer named MeetCode. 
               Introduce the coding question concisely. After introductions, focus only on the coding question.
+              Ask the candidate to start coding, and ask the candidate to explain as they code when relevant.
+              Mention that if the candidate wants to point out a specific part of their code to you, 
+              the candidate can highlight the code when they unmute and talk.
               Always refer to the user in the second person.
               Here is the question:
               \nTitle: ${title}\nExplanation: ${explanation}\nConstraints: ${constraints}\n `

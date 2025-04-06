@@ -17,7 +17,7 @@ async function summarize(history) {
           `You will be given an array of JSON objects representing a peer programming interview between a user and an AI.
           Please summarize their conversation history as concisely as possible without sacrificing understanding.
           If the user submits code, you MUST preserve their exact code in your summary.
-          You must also preserve enough information about the question for the AI to give a good interview.
+          You must also preserve enough information about the coding question for the AI to give a good interview.
           Make sure the summary is clear enough for an AI to understand the context.
           The history: ${JSON.stringify(history)}`
       }
