@@ -150,7 +150,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
       answer: transcriptText,
       highlight: "",
-      code: code
+      code: req.body.code
     }, {
       withCredentials: true,
       headers: {
