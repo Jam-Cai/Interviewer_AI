@@ -31,7 +31,7 @@ require('dotenv').config()
             content: 
             `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill, but 
             dont explictily state this goal. 
-            If the user is asking a question, answer their question without giving away the answer.
+            If the user is asking a question, answer their question without giving away the solution to the coding problem.
             Also guide the user towards the answer as if you were testing their problem solving skills.
             Always refer to the user in the second person.
             Please base your responses off of the following conversation history so far,
@@ -66,7 +66,7 @@ require('dotenv').config()
               content: 
               `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
               but dont explictily state this goal.
-              If the user is asking a question, answer their question without giving away the answer.
+              If the user is asking a question, answer their question without giving away the solution to the coding problem.
               Also guide the user towards the answer as if you were testing their problem solving skills.
               Always refer to the user in the second person.
               Please respond based on this conversation history: ${history}\n
@@ -87,7 +87,7 @@ require('dotenv').config()
               content: 
               `You are a technical programming interviewer. Talk with the goal of evaluating the candidate's technical skill,
               but dont explictily state this goal.
-              If the user is asking a question, answer their question without giving away the answer.
+              If the user is asking a question, answer their question without giving away the solution to the coding problem.
               Also guide the user towards the answer as if you were testing their problem solving skills.
               Always refer to the user in the second person.
               Please respond based on this conversation history: ${history}\n
