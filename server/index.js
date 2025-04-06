@@ -49,9 +49,8 @@ const app = express()
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "public")))
-app.use(express.static(path.join(__dirname, "dist")))
 
-const PORT = process.env.PORT || 10000
+const PORT = process.env.PORT
 
 app.use(session({
   secret: 'secret-key', // change to actual secret key in prod
@@ -112,7 +111,7 @@ const streamToResponse = async (audioResponse, res) => {
 
 // leetcode proxy
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: process.env.FRONTEND_URL,
   credentials: true
 }));
 
