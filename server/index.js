@@ -95,20 +95,50 @@ const streamToResponse = async (audioResponse, res) => {
   res.setHeader('Content-Type', 'audio/mpeg');
 
   try {
+    console.log('Streaming audio response...');
+    console.log('Response type:', typeof audioResponse);
+    console.log('Response data type:', typeof audioResponse.data);
+    console.log('Is stream:', audioResponse.data && typeof audioResponse.data.pipe === 'function');
+    console.log('Is arrayBuffer:', audioResponse.arrayBuffer && typeof audioResponse.arrayBuffer === 'function');
+    console.log('Is buffer:', Buffer.isBuffer(audioResponse));
+
     // First, check if the response data is a stream
     if (audioResponse.data && typeof audioResponse.data.pipe === 'function') {
       console.log("✅ Streaming MP3 audio back to frontend");
       audioResponse.data.pipe(res);
+      audioResponse.data.on('error', (err) => {
+        console.error('Error streaming audio data:', err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: 'Streaming error',
+            details: err.message
+          });
+        }
+      });
     }
     // Next, check if we can get an arrayBuffer from the response
     else if (audioResponse.arrayBuffer && typeof audioResponse.arrayBuffer === 'function') {
       console.log("✅ Converting arrayBuffer to Buffer and streaming");
-      const arrayBuffer = await audioResponse.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const stream = new Readable();
-      stream.push(buffer);
-      stream.push(null);
-      stream.pipe(res);
+      try {
+        const arrayBuffer = await audioResponse.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const stream = new Readable();
+        stream.push(buffer);
+        stream.push(null);
+        stream.pipe(res);
+        stream.on('error', (err) => {
+          console.error('Error streaming converted buffer:', err);
+          if (!res.headersSent) {
+            res.status(500).json({
+              error: 'Streaming error',
+              details: err.message
+            });
+          }
+        });
+      } catch (err) {
+        console.error('Error converting arrayBuffer:', err);
+        throw err;
+      }
     }
     // If the response is already a Buffer, stream it directly
     else if (Buffer.isBuffer(audioResponse)) {
@@ -117,15 +147,26 @@ const streamToResponse = async (audioResponse, res) => {
       stream.push(audioResponse);
       stream.push(null);
       stream.pipe(res);
+      stream.on('error', (err) => {
+        console.error('Error streaming buffer:', err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: 'Streaming error',
+            details: err.message
+          });
+        }
+      });
     } else {
-      throw new Error("TTS response is not streamable.");
+      throw new Error("TTS response is not streamable. Response type: " + typeof audioResponse);
     }
   } catch (error) {
     console.error('Error streaming audio:', error);
+    console.error('Error stack:', error.stack);
     if (!res.headersSent) {
       res.status(500).json({
         error: 'Streaming error',
-        details: error.message
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }
@@ -142,6 +183,8 @@ app.use(cors({
 
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   console.log("🎙️ Incoming transcription request");
+  console.log("Request body:", req.body);
+  console.log("Request file:", req.file);
 
   if (!req.file) {
     console.log("❌ No audio file provided");
@@ -149,29 +192,32 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 
   try {
-    console.log("Provided code: \n")
-    console.log(req.body.code)
-    console.log("Provided highlighted: \n")
-    console.log(req.body.highlight)
-
-
     console.log("📤 Sending file to Whisper for transcription...");
+    console.log("File path:", req.file.path);
+    console.log("File size:", req.file.size);
+    console.log("File mimetype:", req.file.mimetype);
+
+    const fileStream = fs.createReadStream(req.file.path);
+    fileStream.on('error', (err) => {
+      console.error('Error reading file stream:', err);
+    });
+
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(req.file.path),
+      file: fileStream,
       model: "whisper-1",
       language: "en",
       prompt: "ignore sounds that are quiet, you are transcribing someone who is an interviewee for a pair programming coding interview"
+    }).catch(err => {
+      console.error('OpenAI transcription error:', err);
+      throw err;
     });
 
+    if (!transcription || !transcription.text) {
+      throw new Error('No transcription returned from OpenAI');
+    }
+
     const transcriptText = transcription.text;
-    if (!transcriptText) throw new Error('⚠️ No transcription returned');
-
     console.log("✅ Transcription success:", transcriptText);
-
-    // io.emit('transcription', {
-    //   text: transcriptText,
-    //   isFinal: true
-    // });
 
     console.log("📬 Forwarding transcript to /api/answer-question...");
     const answerResponse = await axiosInstance.post('/api/answer-question', {
@@ -181,9 +227,11 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }, {
       withCredentials: true,
       headers: {
-        // Forward the session cookie from the original request to preserve session data.
         Cookie: req.headers.cookie
       }
+    }).catch(err => {
+      console.error('Answer-question API error:', err.response?.data || err.message);
+      throw err;
     });
 
     if (!answerResponse.data || !answerResponse.data.response) {
@@ -194,7 +242,6 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     console.log("🧠 Received AI reply:", replyText);
 
     console.log("🗣️ Generating TTS via OpenAI...");
-    // Use allowed voice ("ash") and response_format ("mp3")
     const audioResponse = await openai.audio.speech.create({
       input: replyText,
       voice: VOICE,
@@ -202,6 +249,9 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       response_format: "mp3",
       model: "gpt-4o-mini-tts",
       stream: true,
+    }).catch(err => {
+      console.error('OpenAI TTS error:', err);
+      throw err;
     });
 
     if (!audioResponse) {
@@ -212,13 +262,27 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     
   } catch (error) {
     console.error('❌ Transcribe endpoint failed:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      response: error.response?.data
+    });
+
     // Clean up the uploaded file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error cleaning up file:', unlinkError);
+      }
     }
+
     return res.status(500).json({
       error: 'Internal Server Error',
-      details: error.message || 'Unknown error'
+      details: error.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -438,6 +502,28 @@ app.use(express.static('dist'))
 //         res.type("txt").send("404 not found")
 //     }
 // })
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  console.error('Error stack:', err.stack);
+  console.error('Request details:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body
+  });
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).json({
+    error: 'Internal Server Error',
+    details: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 
 
