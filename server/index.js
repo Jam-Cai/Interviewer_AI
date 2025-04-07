@@ -277,6 +277,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 app.get('/leetcode/problems', async (req, res) => {
   try {
     const response = await fetch('https://leetcode.com/api/problems/all/');
+    console.log("aaa");
     const data = await response.json();
     res.json(data);
   } catch (error) {
