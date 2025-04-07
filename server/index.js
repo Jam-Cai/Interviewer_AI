@@ -77,7 +77,10 @@ const PORT = process.env.PORT
 app.use(session({
   secret: 'secret-key', // change to actual secret key in prod
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 1000 * 60 * 30 // 30 minutes in milliseconds
+  }
 }))
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 
@@ -414,13 +417,9 @@ app.post('/api/end', async (req, res) => {
 		const aiResponse = await getAIResponse(type, req.session.summarizedHistory);
     const replyText = aiResponse.content.split('*').join('');;
   
-		// add the AI's response to the conversation history
-		req.session.conversationHistory.push({
-			role: 'assistant',
-			content: `The AI said: ${aiResponse.content}`
-		});
-  
-		req.session.summarizedHistory = await summarize(req.session.conversationHistory);
+    // delete session info when interview ends
+    req.session.conversationHistory = [];
+		req.session.summarizedHistory = "";
 
     const audioResponse = await openai.audio.speech.create({
       input: replyText,
@@ -440,12 +439,9 @@ app.post('/api/end', async (req, res) => {
 // start the interview
 app.post('/api/start', async (req, res) => {
 
-	// make the conversation history for a new session
-	if (!req.session.conversationHistory) {
-    console.log("made new session");
-		req.session.conversationHistory = [];
-		req.session.summarizedHistory = "";
-	}
+	// make the conversation history for a new session whenever start is called
+	req.session.conversationHistory = [];
+	req.session.summarizedHistory = "";
 
 	const type = "start"
 
