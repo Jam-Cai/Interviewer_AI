@@ -176,15 +176,17 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
               const selectionEnd = Math.min(selection.to, lineEnd);
 
               const before = state.sliceDoc(lineStart, selectionStart);
-              setHighlighted(state.sliceDoc(selectionStart, selectionEnd));
+              const selected = state.sliceDoc(selectionStart, selectionEnd);
               const after = state.sliceDoc(selectionEnd, lineEnd);
 
-              if (highlighted.trim().length > 0) {
-                selectedLines.push(`${line.number}: ${before}<highlighted>${highlighted}</highlighted>${after}`);
+              if (selected.trim().length > 0) {
+                selectedLines.push(`${line.number}: ${before}<highlighted>${selected}</highlighted>${after}`);
               }
             }
 
-            setSelectedText(selectedLines.join("\n"));
+            const finalHighlight = selectedLines.join("\n");
+            setHighlighted(finalHighlight);
+            setSelectedText(finalHighlight);
           }}
         />
 
