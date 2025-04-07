@@ -1,6 +1,9 @@
 const path = require("path")
 const express = require("express")
 const session = require('express-session')
+const { RedisStore } = require('connect-redis')
+const { createClient } = require('redis')
+const mongoose = require('mongoose')
 const cors = require("cors")
 const multer = require('multer');
 const socketIO = require('socket.io');
@@ -9,9 +12,42 @@ const { OpenAI } = require('openai');
 const axios = require('axios')
 const http = require('http');
 const { Readable } = require('stream');
+const { start } = require("repl")
+
+// User Schema
+const { Schema, model } = mongoose;
+
+const dataSchema = new Schema({
+  interviewTime: { 
+    type: Number, 
+    default: 0 
+  },
+});
+
+const Data = model('aggregated-data', dataSchema);
+
+// Initialize Redie client
+let redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+})
+redisClient.connect().catch(console.error)
 
 const VOICE = "echo"
-
+/** todos 
+ * macro:
+ *  - Info for analytics page
+ *  - Admin 
+ *    - # users
+ *    - avg interview time across all users
+ *    - total interview times
+ *    - total number of interviews
+ *    - site visits
+ *  - User
+ *    - session id
+ *    - total interview time
+ *    - number of interviews
+ *    - track ips
+ */
 const { getAIResponse } = require(path.join(__dirname, 'reviewCode.js'))
 const { summarize } = require(path.join(__dirname, 'summarize.js'));
 
@@ -52,22 +88,60 @@ app.use(express.static(path.join(__dirname, "public")))
 
 const PORT = process.env.PORT
 
-app.use(session({
+const sessionMiddleware = session({
+  store: new RedisStore({ client: redisClient }),
   secret: 'secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: {
-    maxAge: 1000 * 60 * 30 // 30 minutes in milliseconds
+    maxAge: 1000 * 60 * 30, // 30 minutes in milliseconds
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true
   }
-}))
+})
+
+app.use(sessionMiddleware)
+
+redisClient.on('error', (err) => {
+  console.error('Redis error:', err)
+})
+
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
 io.on('connection', (socket) => {
-  console.log('Client connected');
+  console.log(`Client connected: ${socket.id}`);
+  const startTime = new Date();
+  socket.on('disconnect', async () => {
+    console.log(`Client disconnected: ${socket.id}`);
+    const endTime = new Date();
+    const diff = Math.ceil(((endTime - startTime) / 1000) / 125) * 125;
+    console.log(diff);
+
   
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
+      
+      try {
+        await mongoose.connect(process.env.MONGODB_URL);
+        console.log("Connected to MongoDB");
+
+        const newData = new Data({
+          interviewTime: diff
+        })
+
+        await newData.save();
+        console.log("Analysis Saved");
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        await mongoose.connection.close();
+      }
   });
 });
 
@@ -153,7 +227,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     // });
 
     console.log("📬 Forwarding transcript to /api/answer-question...");
-    const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
+    const answerResponse = await axiosInstance.post(`${process.env.BACKEND_URL}${PORT}/api/answer-question`, {
       answer: transcriptText,
       highlight: req.body.highlight,
       code: req.body.code
@@ -384,6 +458,58 @@ app.post('/api/start', async (req, res) => {
 })
 
 
+// Admin endpoints for interview analytics
+
+// Total Interview Time
+app.get('/api/admin/totalinterviewtime', async (req, res) => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URL);
+    const result = await Data.aggregate([
+      { $group: { _id: null, totalTime: { $sum: "$interviewTime" } } }
+    ]);
+    const totalTime = result[0] ? result[0].totalTime : 0;
+    res.json({ totalInterviewTime: totalTime });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    await mongoose.connection.close();
+  }
+});
+
+// Total Number of Interviews
+app.get('/api/admin/totalnumberinterviews', async (req, res) => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URL);
+    const totalInterviews = await Data.countDocuments({});
+    res.json({ totalNumberInterviews: totalInterviews });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    await mongoose.connection.close();
+  }
+});
+
+// Average Interview Time
+app.get('/api/admin/averageinterviewtime', async (req, res) => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URL);
+    const result = await Data.aggregate([
+      { $group: { _id: null, totalTime: { $sum: "$interviewTime" }, count: { $sum: 1 } } }
+    ]);
+    let averageTime = 0;
+    if (result[0] && result[0].count > 0) {
+      averageTime = result[0].totalTime / result[0].count;
+    }
+    res.json({ averageInterviewTime: averageTime });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    await mongoose.connection.close();
+  }
+});
+
+
+
 // app.get("^/$|/index(.html)?", (req, res) => {
 //     res.sendFile(path.join(__dirname, "views", "dist")) 
 // })
@@ -403,6 +529,12 @@ app.use(express.static('dist'))
 //     }
 // })
 
-
-
-
+process.on('SIGINT', async () => {
+  try {
+    await redisClient.quit();
+    console.log('Redit client disconnected');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error during shutdown', err);
+    process.exit(1);
+  }})
