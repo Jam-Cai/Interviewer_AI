@@ -144,6 +144,8 @@ function ProblemPage() {
       clearTimeout(silenceTimerRef.current);
       cancelAnimationFrame(animationFrameRef.current);
 
+        // Attach the onstop handler before calling stop()
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const formData = new FormData();
@@ -151,41 +153,43 @@ function ProblemPage() {
         formData.append('code', code);
         formData.append('highlight', highlighted);
         try {
-          // Set responseType to 'blob' so axios treats the response as binary data.
-
-          // const test_res = await axios.post('http://localhost:3000/api/submit-code', formData, {
-          //     headers: { "Content-Type": "multipart/form-data" },
-          //     responseType: 'blob'
-          //   });
-
-          // console.log(code)
-
           const response = await axios.post('/api/transcribe', formData, {
-            // headers: { "Content-Type": "multipart/form-data" },
             responseType: 'blob',
             withCredentials: true
           });
           
-          // Create an object URL from the received blob.
           const mp3Blob = response.data;
           const audioUrl = URL.createObjectURL(mp3Blob);
           const audio = new Audio(audioUrl);
-
           setStatus('Speaking audio...');
+          
           audio.onended = () => {
             setStatus('Ready to record');
           };
-          
-          
 
-
-          audio.play();
+          // Handle potential playback errors
+          audio.play().catch(err => {
+            console.error('Audio playback failed:', err);
+            setStatus('Ready to record');
+          });
         } catch (err) {
           console.error('Error sending audio:', err);
           setStatus('Ready to record');
         }
       };
-      
+
+      // Now stop the recorder after the handler is attached
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+      setStatus('Processing audio...');
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      clearTimeout(silenceTimerRef.current);
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+          
     }
   };
 
