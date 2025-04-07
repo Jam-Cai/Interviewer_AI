@@ -58,7 +58,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
     try {
       await waitForStatus();
 
-      const response = await axios.post(`${process.env.BACKEND_URL}:${process.env.PORT}/api/end`, {}, {
+      const response = await axios.post(`/api/end`, {}, {
         responseType: 'blob', // 👈 important: expecting audio
         withCredentials: true
       });

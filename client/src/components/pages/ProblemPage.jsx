@@ -158,7 +158,7 @@ function ProblemPage() {
 
           // console.log(code)
 
-          const response = await axios.post(`${process.env.BACKEND_URL}:${process.env.PORT}/api/transcribe`, formData, {
+          const response = await axios.post(`/api/transcribe`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
             responseType: 'blob',
             withCredentials: true
@@ -190,7 +190,7 @@ function ProblemPage() {
   useEffect(() => {
     const fetchProblem = async () => {
       try {
-        const response = await axios.get(`${process.env.BACKEND_URL}:${process.env.PORT}/api/problem/${id}`);
+        const response = await axios.get(`/api/problem/${id}`);
         setProblem(response.data);
       } catch {
         setError("Unfortunately, this problem is not supported by our platform.");
@@ -209,7 +209,7 @@ function ProblemPage() {
     setLoading(true);
   
     try {
-      const response = await axios.post(`${process.env.BACKEND_URL}:${process.env.PORT}/api/start`, {
+      const response = await axios.post(`/api/start`, {
         title: problem.title,
         explanation: problem.explanation,
         examples: problem.examples
