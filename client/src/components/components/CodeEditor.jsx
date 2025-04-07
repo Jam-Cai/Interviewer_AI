@@ -70,7 +70,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   
       // Wait for audio to finish before navigating
       audio.onended = () => {
-        navigate("/demo");
+        navigate("/interview");
       };
     } catch (error) {
       console.error("Error ending interview:", error);
