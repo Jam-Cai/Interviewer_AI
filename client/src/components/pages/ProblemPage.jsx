@@ -170,9 +170,6 @@ function ProblemPage() {
           audio.onended = () => {
             setStatus('Ready to record');
           };
-          
-          
-
 
           audio.play();
         } catch (err) {

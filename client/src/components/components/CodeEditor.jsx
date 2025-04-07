@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useViewTransitionState } from "react-router-dom";
 import { EditorView } from "@codemirror/view";
@@ -16,6 +16,7 @@ import MuteButton from './MuteButton';
 import { useCode } from "../context/useCode.jsx";
 import { useHighlighted } from "../context/useHighlighted.jsx";
 
+
 function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status, endTranscription }) {
   const {code, setCode} = useCode();
   const [output, setOutput] = useState("");
@@ -24,13 +25,39 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   const [language, setLanguage] = useState("cpp"); 
   const {highlighted, setHighlighted} = useHighlighted("");
 
+  const [isDoneClicked, setIsDoneClicked] = useState(false); 
+
+  const statusRef = useRef(status);
+
+  const navigate = useNavigate();
 
   const handleCodeChange = (value) => {
     setCode(value);
   };
 
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
   const handleDoneInterview = async () => {
+    if (isDoneClicked) return;
+    setIsDoneClicked(true);
+
+    const waitForStatus = async () => {
+      return new Promise((resolve) => {
+        const interval = setInterval(() => {
+          console.log(statusRef.current);
+          if (statusRef.current == "Ready to record") {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 500);
+      });
+    };
+
     try {
+      await waitForStatus();
+
       const response = await axios.post("http://localhost:3000/api/end", {}, {
         responseType: 'blob', // 👈 important: expecting audio
         withCredentials: true
@@ -49,9 +76,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
       console.error("Error ending interview:", error);
       navigate("/"); // fallback navigate
     }
-  };  
-
-  const navigate = useNavigate();
+  };
 
   const getLanguageExtension = () => {
     switch (language) {
@@ -103,8 +128,11 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
           <div className="ml-3 flex items-center space-x-3">
             <Timer hasStarted={hasStarted} handleDoneInterview={handleDoneInterview} />
             <button
-              className="bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white"
+              className={`bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white ${
+                isDoneClicked ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               onClick={handleDoneInterview}
+              disabled={isDoneClicked}
             >
               DONE INTERVIEW
             </button>
