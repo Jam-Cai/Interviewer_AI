@@ -11,7 +11,7 @@ function SelectProblem() {
   const handleSubmit = async () => {
     if (slug) {
       try {
-        const response = await axios.get('http://localhost:3000/leetcode/problems');
+        const response = await axios.get(`${process.env.BACKEND_URL}:${process.env.PORT}/leetcode/problems`);
         const data = response?.data;
         const problem = data?.stat_status_pairs.find((p) => p.stat.question__title_slug === slug);
           
