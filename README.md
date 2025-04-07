@@ -25,7 +25,7 @@ MeetCode is built with a modern, scalable web stack:
 - **Frontend:** React / Next.js, styled with Tailwind CSS
 - **Backend:** Node.js with Express.
 - **Database:** MongoDB, Redis.
-- **APIs:** OpenAI API for voice simulation and ElevenLabs transcription.
+- **APIs:** OpenAI API for transcription and interviewer simulation, and ElevenLabs for TTS.
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
