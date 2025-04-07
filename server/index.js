@@ -324,6 +324,7 @@ app.post('/api/end', async (req, res) => {
 		const aiResponse = await getAIResponse(type, req.session.summarizedHistory);
     const replyText = aiResponse.content.split('*').join('');;
   
+    // reset session when ending
     req.session.conversationHistory = [];
 		req.session.summarizedHistory = "";
 
