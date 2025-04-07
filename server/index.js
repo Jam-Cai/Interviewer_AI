@@ -227,7 +227,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     // });
 
     console.log("📬 Forwarding transcript to /api/answer-question...");
-    const answerResponse = await axiosInstance.post(`http://localhost:${PORT}/api/answer-question`, {
+    const answerResponse = await axiosInstance.post(`${process.env.BACKEND_URL}${PORT}/api/answer-question`, {
       answer: transcriptText,
       highlight: req.body.highlight,
       code: req.body.code

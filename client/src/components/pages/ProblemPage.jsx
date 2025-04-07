@@ -161,7 +161,7 @@ function ProblemPage() {
           // console.log(code)
 
           const response = await axios.post('http://localhost:3000/api/transcribe', formData, {
-            headers: { "Content-Type": "multipart/form-data" },
+            // headers: { "Content-Type": "multipart/form-data" },
             responseType: 'blob',
             withCredentials: true
           });
