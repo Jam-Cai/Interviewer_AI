@@ -39,6 +39,18 @@ function ProblemPage() {
   const silenceDuration = 3000;
 
   useEffect(() => {
+    const requestMicPermission = async () => {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        console.error('Microphone permission denied:', err);
+      }
+    };
+  
+    requestMicPermission();
+  }, []);
+
+  useEffect(() => {
     // Connect to Socket.IO server
     const socket = io();
     socketRef.current = socket;
@@ -154,10 +166,11 @@ function ProblemPage() {
           const audioUrl = URL.createObjectURL(mp3Blob);
           const audio = new Audio(audioUrl);
 
+          setStatus('Speaking audio...');
           audio.onended = () => {
             setStatus('Ready to record');
           };
-          console.log("playing audio");
+          
           
 
 
@@ -205,7 +218,7 @@ function ProblemPage() {
         withCredentials: true
       });
 
-      setStatus('Processing audio...');
+      setStatus('Speaking audio...');
   
       console.log('AI Interview Started:', response.data);
 

@@ -118,12 +118,12 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         <div 
           className="fixed z-50 px-3 py-2 text-sm text-black bg-white rounded-sm pointer-events-none"
           style={{
-            left: `${hoverPosition.x-195}px`,
+            left: `${hoverPosition.x-215}px`,
             top: `${hoverPosition.y -25}px`,
             transform: 'translateY(-50%)'
           }}
         >
-          Hold CTRL/CMD + D 
+          Hold CTRL / ⌘CMD + D 
           <br></br>to speak
           <div className="absolute w-2 h-2 transform rotate-45 -right-1 top-[70%] -translate-y-1/2 bg-white" />
         </div>
@@ -136,6 +136,15 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
                         bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
                         opacity-90 fade-out pointer-events-none z-50">
           {overlayText}
+        </div>
+      )}
+
+      {/* Processing Overlay */}
+      {status === "Processing audio..." && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                        bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
+                        opacity-90 pointer-events-none z-50">
+          The Interviewer is Processing...
         </div>
       )}
 

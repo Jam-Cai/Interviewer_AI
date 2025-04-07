@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 
-function Timer({ hasStarted }) {
+function Timer({ hasStarted, handleDoneInterview }) {
   const [time, setTime] = useState(1800);
+
+  useEffect(() => {
+    if (time == 0) {
+      handleDoneInterview();
+    }
+  }, [time])
 
   useEffect(() => {
     if (!hasStarted) return;

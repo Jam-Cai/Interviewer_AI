@@ -101,7 +101,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
           <h1 className="text-lg font-semibold">Code Editor</h1>
           
           <div className="ml-3 flex items-center space-x-3">
-            <Timer hasStarted={hasStarted} />
+            <Timer hasStarted={hasStarted} handleDoneInterview={handleDoneInterview} />
             <button
               className="bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white"
               onClick={handleDoneInterview}
@@ -148,7 +148,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
 
 
       {/* Code Editor */}
-      <div className="mt-3 relative flex-1 border border-(--code-stroke) rounded-sm overflow-hidden">
+      <div className="mt-3 relative flex-1 border border-(--code-stroke) rounded-sm overflow-hidden" style={{ "scrollbarColor": "var(--code-stroke) var(--background)" }}>
         <CodeMirror
           value={code}
           className="w-full h-full"
