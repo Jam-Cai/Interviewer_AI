@@ -514,7 +514,9 @@ app.get('/api/admin/averageinterviewtime', async (req, res) => {
 // app.get("^/$|/index(.html)?", (req, res) => {
 //     res.sendFile(path.join(__dirname, "views", "dist")) 
 // })
-
+app.all('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 app.use(express.static('dist'))
 
 // // if none of the above, serve 404 page
