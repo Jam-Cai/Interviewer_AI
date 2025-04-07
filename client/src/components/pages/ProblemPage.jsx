@@ -58,6 +58,9 @@ function ProblemPage() {
     socket.on('transcription', (data) => {
       console.log('Transcription:', data);
     });
+    socket.on('connection', () => {
+      console.log("Client connected to server");
+    });
     socket.on('error', (error) => {
       console.error('Socket error:', error);
     });
