@@ -84,8 +84,7 @@ const app = express()
 
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
-// Serve static files from the React app's build directory
-app.use(express.static(path.join(__dirname, "../server/dist")))
+app.use(express.static(path.join(__dirname, "public")))
 
 const PORT = process.env.PORT
 
@@ -515,11 +514,23 @@ app.get('/api/admin/averageinterviewtime', async (req, res) => {
 // app.get("^/$|/index(.html)?", (req, res) => {
 //     res.sendFile(path.join(__dirname, "views", "dist")) 
 // })
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../server/dist/index.html'));
+app.all('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
+app.use(express.static('dist'))
+
+// // if none of the above, serve 404 page
+// app.all("*", (req, res) => {
+//     res.status(404)
+    
+//     if (req.accepts("html")) {
+//         res.sendFile(path.join(__dirname, "views", "404.html")) 
+//     } else if (req.accepts("html")) {
+//         res.json({ error: "404 not foundx" })
+//     } else {
+//         res.type("txt").send("404 not found")
+//     }
+// })
 
 process.on('SIGINT', async () => {
   try {

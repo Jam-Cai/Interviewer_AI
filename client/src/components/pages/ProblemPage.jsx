@@ -20,7 +20,7 @@ function ProblemPage() {
   // Transcription useStates
   const [status, setStatus] = useState('Ready to record');
   const [averageVolume, setAverageVolume] = useState(0);
-  // const [recording, setRecording] = useState(false);
+  const [recording, setRecording] = useState(false);
 
   // Context Hooks
   const { code } = useCode();
@@ -121,7 +121,7 @@ function ProblemPage() {
       };
 
       mediaRecorder.start();
-      // setRecording(true);
+      setRecording(true);
       setStatus('Recording in progress...');
       // Begin checking for silence
       endTranscription(analyser, dataArray);
@@ -134,7 +134,7 @@ function ProblemPage() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      // setRecording(false);
+      setRecording(false);
       setStatus('Processing audio...');
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
