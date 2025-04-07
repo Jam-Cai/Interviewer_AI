@@ -144,7 +144,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                         bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
                         opacity-90 pointer-events-none z-50">
-          The Interviewer is Processing...
+          The Interviewer is Thinking...
         </div>
       )}
 

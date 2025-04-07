@@ -18,10 +18,9 @@ function LandingPage() {
         </button>
         <div className="my-2">
           <button 
-              className="mr-3 h-full w-28 border-3 border-(--hero) rounded-full bg-(--hero) text-white transition duration-300 cursor-pointer"
-              onClick={() => navigate("/interview")}
+              className="mr-3 h-full w-22 border-3 border-(--hero) rounded-full bg-(--hero) transition duration-300 cursor-pointer"
             >
-              Try It Now
+              <a target="_blank" href="https://github.com/Jam-Cai/MeetCode">GitHub</a>
           </button>
         </div>
         
@@ -30,7 +29,7 @@ function LandingPage() {
       
       {/* Main Content */}
       <div className="h-[80vh] w-full px-8 md:px-16 lg:px-40 flex flex-col md:flex-row items-center justify-center py-12">
-        <div className="w-full md:w-1/2 lg:w-[37vw] flex flex-col gap-4 mb-8 md:mb-0"> 
+        <div className="w-[37vw] flex flex-col gap-4 mb-8 md:mb-0"> 
           <h1 className="text-3xl md:text-4xl lg:text-[38px] leading-tight font-black">
             <span className="text-white bg-(--hero) px-2">MeetCode:</span> Your New Favourite LeetCode Preparation Tool
           </h1> 
