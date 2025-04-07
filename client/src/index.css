@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --background:rgb(34, 34, 34);
+  --background:rgb(30, 30, 30);
+  --hero: #04AD8C;
   --orange:rgb(255, 168, 61);
   --green:rgb(75, 227, 106);
   --red:rgb(247, 91, 91);
   --code-fill: #252526;
-  --code-stroke:rgb(89, 92, 96);
-  --mute-bg:rgb(89, 92, 96);
-  --mute-bg-light:rgb(52, 53, 55);
+  --code-stroke:rgb(59, 59, 59);
+  --mute-bg:rgb(79, 79, 79);
+  --mute-bg-light:rgb(46, 46, 46);
   --code-text: #D4D4D4;
 }
 

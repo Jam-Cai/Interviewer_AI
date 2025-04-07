@@ -177,7 +177,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                         bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
                         opacity-90 pointer-events-none z-50">
-          The Interviewer is Processing...
+          The Interviewer is Thinking...
         </div>
       )}
 
@@ -204,7 +204,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         <button
           className={`cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md transition-all z-50 ${
             !isMuted 
-              ? 'scale-105 bg-(--red) shadow-lg shadow-red-500/50'
+              ? 'scale-105 bg-green-500 shadow-lg shadow-green-500/50'
               : 'bg-(--mute-bg)'
           }`}
           aria-label={isMuted ? "Unmute" : "Mute"}

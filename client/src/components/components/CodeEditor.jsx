@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useViewTransitionState } from "react-router-dom";
 import { EditorView } from "@codemirror/view";
@@ -16,6 +16,7 @@ import MuteButton from './MuteButton';
 import { useCode } from "../context/useCode.jsx";
 import { useHighlighted } from "../context/useHighlighted.jsx";
 
+
 function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status, endTranscription }) {
   const {code, setCode} = useCode();
   const [output, setOutput] = useState("");
@@ -24,12 +25,36 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   const [language, setLanguage] = useState("cpp"); 
   const {highlighted, setHighlighted} = useHighlighted("");
 
+  const [isDoneClicked, setIsDoneClicked] = useState(false); 
+
+  const statusRef = useRef(status);
+
+  const navigate = useNavigate();
 
   const handleCodeChange = (value) => {
     setCode(value);
   };
 
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
   const handleDoneInterview = async () => {
+    if (isDoneClicked) return;
+    setIsDoneClicked(true);
+
+    const waitForStatus = async () => {
+      return new Promise((resolve) => {
+        const interval = setInterval(() => {
+          console.log(statusRef.current);
+          if (statusRef.current == "Ready to record") {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 500);
+      });
+    };
+
     try {
       const response = await axios.post("/api/end", {}, {
         responseType: 'blob', // 👈 important: expecting audio
@@ -43,15 +68,13 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   
       // Wait for audio to finish before navigating
       audio.onended = () => {
-        navigate("/");
+        navigate("/demo");
       };
     } catch (error) {
       console.error("Error ending interview:", error);
       navigate("/"); // fallback navigate
     }
-  };  
-
-  const navigate = useNavigate();
+  };
 
   const getLanguageExtension = () => {
     switch (language) {
@@ -103,8 +126,11 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
           <div className="ml-3 flex items-center space-x-3">
             <Timer hasStarted={hasStarted} handleDoneInterview={handleDoneInterview} />
             <button
-              className="bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white"
+              className={`bg-(--red) cursor-pointer transition-all px-3 py-1 text-xs font-semibold rounded-full text-white ${
+                isDoneClicked ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               onClick={handleDoneInterview}
+              disabled={isDoneClicked}
             >
               DONE INTERVIEW
             </button>
@@ -194,7 +220,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
         <button
           id="run-button"
           onClick={compileCode}
-          className="hover:scale-105 transition-all absolute bottom-4 right-4 w-9 h-9 flex items-center justify-center bg-green-600 rounded-full hover:bg-green-500 shadow-md cursor-pointer"
+          className="hover:scale-105 transition-all absolute bottom-4 right-4 w-9 h-9 flex items-center justify-center bg-(--hero) rounded-full hover:bg-(--hero) hover:opacity-90 shadow-md cursor-pointer"
         >
           <Play size={18} />
         </button>

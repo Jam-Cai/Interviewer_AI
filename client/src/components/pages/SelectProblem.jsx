@@ -48,12 +48,14 @@ function SelectProblem() {
   return (
     <>
       {/* Top Navigation */}
-      <a href="/">
-        <div className="absolute top-0 left-0 w-full justify-center flex items-center px-8 py-6 cursor-pointer">
+      <button onClick={() => navigate("/")}>
+        <div 
+          className="absolute top-0 left-0 w-full justify-center flex items-center px-8 py-6 cursor-pointer" 
+        >
           <img src="/logo.png" alt="Logo" className="w-8 h-8 mr-2" />
           <div className="text-white text-xl font-semibold">MeetCode</div>
         </div>
-      </a>
+      </button>
       
 
       {/* Main Content */}
@@ -68,13 +70,13 @@ function SelectProblem() {
             type="text" 
             onChange={handleInputChange}
             placeholder="Paste Leetcode Link..." 
-            className="w-100 mt-5 px-4 p-2 rounded-[50px] border-3 border-(--code-text) bg-(--background) text-(--code-text) placeholder-(--code-text)/70 focus:outline-none focus:ring-2 focus:ring-(--orange)"
+            className="w-100 mt-5 px-4 p-2 rounded-[50px] border-3 border-(--code-text) bg-(--background) text-(--code-text) placeholder-(--code-text)/70 focus:outline-none focus:ring-2 focus:ring-(--hero)"
           />
 
           {/* Start Interview Button */}
           <button 
             onClick={handleSubmit}
-            className="mt-4 w-100 p-2 border-3 border-(--orange) rounded-[50px] bg-(--orange) text-(--background) transition duration-300 cursor-pointer"
+            className="mt-4 w-100 p-2 border-3 border-(--hero) rounded-[50px] bg-(--hero) text-white transition duration-300 cursor-pointer"
           >
             Start Interview
           </button>

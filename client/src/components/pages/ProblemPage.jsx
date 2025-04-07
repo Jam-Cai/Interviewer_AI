@@ -167,11 +167,8 @@ function ProblemPage() {
             setStatus('Ready to record');
           };
 
-          // Handle potential playback errors
-          audio.play().catch(err => {
-            console.error('Audio playback failed:', err);
-            setStatus('Ready to record');
-          });
+          audio.play();
+          
         } catch (err) {
           console.error('Error sending audio:', err);
           setStatus('Ready to record');
