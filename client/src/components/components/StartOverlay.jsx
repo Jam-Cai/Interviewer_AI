@@ -7,7 +7,7 @@ function StartOverlay({ onStart, isLoading }) {
       <button
         onClick={onStart}
         disabled={isLoading}
-        className={`cursor-pointer bg-green-600 px-5 py-3 rounded-full text-lg font-semibold text-white shadow-lg flex items-center justify-center gap-2 transition-opacity ${
+        className={`cursor-pointer bg-(--hero) px-5 py-3 rounded-full text-lg font-semibold text-white shadow-lg flex items-center justify-center gap-2 transition-opacity ${
           isLoading ? "opacity-70 cursor-not-allowed" : ""
         }`}
       >

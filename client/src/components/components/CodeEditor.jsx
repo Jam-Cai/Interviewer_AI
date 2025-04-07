@@ -70,7 +70,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   
       // Wait for audio to finish before navigating
       audio.onended = () => {
-        navigate("/");
+        navigate("/demo");
       };
     } catch (error) {
       console.error("Error ending interview:", error);
@@ -222,7 +222,7 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
         <button
           id="run-button"
           onClick={compileCode}
-          className="hover:scale-105 transition-all absolute bottom-4 right-4 w-9 h-9 flex items-center justify-center bg-green-600 rounded-full hover:bg-green-500 shadow-md cursor-pointer"
+          className="hover:scale-105 transition-all absolute bottom-4 right-4 w-9 h-9 flex items-center justify-center bg-(--hero) rounded-full hover:bg-(--hero) hover:opacity-90 shadow-md cursor-pointer"
         >
           <Play size={18} />
         </button>

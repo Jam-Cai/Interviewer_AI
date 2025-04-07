@@ -171,7 +171,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         <button
           className={`cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md transition-all z-50 ${
             !isMuted 
-              ? 'scale-105 bg-(--red) shadow-lg shadow-red-500/50'
+              ? 'scale-105 bg-green-500 shadow-lg shadow-green-500/50'
               : 'bg-(--mute-bg)'
           }`}
           aria-label={isMuted ? "Unmute" : "Mute"}
