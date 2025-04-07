@@ -52,12 +52,17 @@ function ProblemPage() {
 
   useEffect(() => {
     // Connect to Socket.IO server
-    const socket = io();
+    const socket = io("http://localhost:3000");
     socketRef.current = socket;
     console.log('Socket connected');
     socket.on('transcription', (data) => {
       console.log('Transcription:', data);
     });
+
+    socket.on('connection', () => {
+      console.log("Client connected to server");
+    });
+
     socket.on('error', (error) => {
       console.error('Socket error:', error);
     });
