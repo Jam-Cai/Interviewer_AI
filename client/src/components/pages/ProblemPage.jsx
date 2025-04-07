@@ -190,7 +190,7 @@ function ProblemPage() {
   useEffect(() => {
     const fetchProblem = async () => {
       try {
-        const response = await axios.get(``${process.env.BACKEND_URL}:${process.env.PORT}/api/problem/${id}`);
+        const response = await axios.get(`${process.env.BACKEND_URL}:${process.env.PORT}/api/problem/${id}`);
         setProblem(response.data);
       } catch {
         setError("Unfortunately, this problem is not supported by our platform.");
@@ -209,7 +209,7 @@ function ProblemPage() {
     setLoading(true);
   
     try {
-      const response = await axios.post('http://localhost:3000/api/start', {
+      const response = await axios.post(`${process.env.BACKEND_URL}:${process.env.PORT}/api/start`, {
         title: problem.title,
         explanation: problem.explanation,
         examples: problem.examples
