@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status }) => {
-  const [isMuted, setIsMuted] = useState(true);
+const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, status, isRecording }) => {
   const [amplitude, setAmplitude] = useState(0);
   const [barMultipliers, setBarMultipliers] = useState([1, 1, 1]);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [overlayText, setOverlayText] = useState("Recording...");
+  const [overlayText] = useState("Recording...");
   const isKeyPressedRef = useRef(false);
 
   const [isHovered, setIsHovered] = useState(false);
@@ -28,25 +27,19 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
   }, [status]);
 
   const turnOnMic = async() => {
-    setIsMuted(false);
-
     try {
       await startRecording(); 
     } catch (err) {
       console.error("Error toggling recording:", err);
     }
-
   }
 
   const turnOffMic = async() => {
-    setIsMuted(true);
-
     try {
       await stopRecording(); 
     } catch (err) {
       console.error("Error toggling recording:", err);
     }
-
   }
 
   useEffect(() => {
@@ -55,7 +48,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
         e.preventDefault();
     
-        if (statusRef.current === "Ready to record" && !isKeyPressedRef.current) {
+        if (statusRef.current === "Ready to record" && !isKeyPressedRef.current && !isRecording) {
           isKeyPressedRef.current = true;
           setShowOverlay(true);
           turnOnMic();
@@ -66,7 +59,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
     const handleKeyUp = (e) => {
       if (e.key.toLowerCase() === "d" || e.key.toLowerCase() === "meta" || e.key.toLowerCase() === "control") {
         e.preventDefault();
-        if (isKeyPressedRef.current) {
+        if (isKeyPressedRef.current && isRecording) {
           isKeyPressedRef.current = false;
           setShowOverlay(false);
           turnOffMic();
@@ -81,11 +74,11 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [averageVolume, hasStarted]);
+  }, [isRecording, averageVolume, hasStarted]);
 
   // Handle amplitude based on averageVolume
   useEffect(() => {
-    if (!hasStarted || isMuted) {
+    if (!hasStarted || !isRecording) {
       setAmplitude(0.1);
       return;
     }
@@ -93,12 +86,12 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
     const clampedVolume = Math.min(averageVolume, 60);
     const normalized = Math.max(Math.min(clampedVolume / 30, 1), 0.2);
     setAmplitude(normalized);
-  }, [isMuted, hasStarted, averageVolume]);
+  }, [isRecording, hasStarted, averageVolume]);
 
   // Bar animation
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!hasStarted || isMuted) {
+      if (!hasStarted || !isRecording) {
         setBarMultipliers([1, 1, 1]);
       } else {
         setBarMultipliers([
@@ -109,7 +102,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [isMuted, hasStarted]);
+  }, [isRecording, hasStarted]);
 
   return (
     <>
@@ -170,17 +163,17 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         {/* Mute/Unmute Button */}
         <button
           className={`cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md transition-all z-50 ${
-            !isMuted 
+            isRecording 
               ? 'scale-105 bg-green-500 shadow-lg shadow-green-500/50'
               : 'bg-(--mute-bg)'
           }`}
-          aria-label={isMuted ? "Unmute" : "Mute"}
+          aria-label={!isRecording ? "Unmute" : "Mute"}
           disabled={!hasStarted}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onMouseMove={handleMouseMove}
         >
-          {isMuted ? (
+          {!isRecording ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />

@@ -511,13 +511,21 @@ app.get('/api/admin/averageinterviewtime', async (req, res) => {
 
 
 
-// app.get("^/$|/index(.html)?", (req, res) => {
-//     res.sendFile(path.join(__dirname, "views", "dist")) 
-// })
-app.all('*', (req, res) => {
+// Delete these lines:
+// app.all('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// });
+// app.use(express.static('dist'))
+
+// Add these lines at the end of the file, after all API routes:
+// Serve static files from client build
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Handle client-side routing - this needs to be the LAST route
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
-app.use(express.static('dist'))
+// app.use(express.static('dist'))
 
 // // if none of the above, serve 404 page
 // app.all("*", (req, res) => {

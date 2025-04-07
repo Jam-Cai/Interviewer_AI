@@ -9,6 +9,8 @@
       "server": "nodemon index.js",
       "redis": "redis-server",
       "dev": "concurrently \"npm run redis\" \"npm run server\"",
+      "client": "cd ../client && npm run dev",
+      "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
       "build:ui": "npm i && rm -rf dist && cd ../client && npm install @vitejs/plugin-react --save && npm i && npm run build && cp -r dist ../server",
       "deploy:full": "npm run build:ui && git add . && git commit -m \"uibuild\" && git push",
       "deploy:prod": "npm run build:ui && git add . && git commit -m \"prod deploy\" && git push && npm run start:prod:with-redis"

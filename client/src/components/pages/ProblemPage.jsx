@@ -253,7 +253,15 @@ function ProblemPage() {
       <ProblemDescription problem={problem} />
       
       {/* Code Editor */}
-      <CodeEditor hasStarted={started} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} status={status} endTranscription={endTranscription}/>
+      <CodeEditor 
+        hasStarted={started} 
+        averageVolume={averageVolume} 
+        startRecording={startRecording} 
+        stopRecording={stopRecording} 
+        status={status} 
+        isRecording={recording}
+        endTranscription={endTranscription}
+      />
 
     </div>
   );

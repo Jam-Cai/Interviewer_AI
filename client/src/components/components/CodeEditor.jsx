@@ -17,7 +17,7 @@ import { useCode } from "../context/useCode.jsx";
 import { useHighlighted } from "../context/useHighlighted.jsx";
 
 
-function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status, endTranscription }) {
+function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, status, isRecording, endTranscription }) {
   const {code, setCode} = useCode();
   const [output, setOutput] = useState("");
   const [selectedText, setSelectedText] = useState("");
@@ -235,7 +235,14 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
       </div>
 
       {/* Mute Button */}
-      <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} />
+      <MuteButton 
+        status={status} 
+        hasStarted={hasStarted} 
+        averageVolume={averageVolume} 
+        startRecording={startRecording} 
+        stopRecording={stopRecording} 
+        isRecording={isRecording}
+      />
     </div>
   );
 }
