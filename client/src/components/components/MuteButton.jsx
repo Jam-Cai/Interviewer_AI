@@ -9,6 +9,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
   const isKeyPressedRef = useRef(false);
   const isProcessingRef = useRef(false);
   const debounceTimeoutRef = useRef(null);
+  const lastActionRef = useRef(null);
 
   const [isHovered, setIsHovered] = useState(false);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
@@ -30,31 +31,35 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
   }, [status]);
 
   const turnOnMic = async() => {
-    if (isProcessingRef.current) return;
+    if (isProcessingRef.current || lastActionRef.current === 'on') return;
     
     setIsMuted(false);
     isProcessingRef.current = true;
+    lastActionRef.current = 'on';
 
     try {
       await startRecording();
     } catch (err) {
       console.error("Error toggling recording:", err);
       setIsMuted(true);
+      lastActionRef.current = null;
     } finally {
       isProcessingRef.current = false;
     }
   }
 
   const turnOffMic = async() => {
-    if (isProcessingRef.current) return;
+    if (isProcessingRef.current || lastActionRef.current === 'off') return;
     
     setIsMuted(true);
     isProcessingRef.current = true;
+    lastActionRef.current = 'off';
 
     try {
       await stopRecording();
     } catch (err) {
       console.error("Error toggling recording:", err);
+      lastActionRef.current = null;
     } finally {
       isProcessingRef.current = false;
     }
@@ -89,7 +94,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
             setShowOverlay(false);
             turnOffMic();
           }
-        }, 100);
+        }, 200); // Increased delay to 200ms
       }
     };
   
