@@ -52,7 +52,7 @@ function ProblemPage() {
 
   useEffect(() => {
     // Connect to Socket.IO server
-    const socket = io("http://localhost:3000");
+    const socket = io("https://meetcode-wjso.onrender.com/");
     socketRef.current = socket;
     console.log('Socket connected');
     socket.on('transcription', (data) => {
