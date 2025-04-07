@@ -52,7 +52,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
   useEffect(() => {
     const handleKeyDown = (e) => {
     
-      if (e.metaKey && e.key.toLowerCase() === "d") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
         e.preventDefault();
     
         if (statusRef.current === "Ready to record" && !isKeyPressedRef.current) {
@@ -64,7 +64,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
     };
   
     const handleKeyUp = (e) => {
-      if (e.key.toLowerCase() === "d" || e.key.toLowerCase() === "meta") {
+      if (e.key.toLowerCase() === "d" || e.key.toLowerCase() === "meta" || e.key.toLowerCase() === "control") {
         e.preventDefault();
         if (isKeyPressedRef.current) {
           isKeyPressedRef.current = false;
