@@ -85,7 +85,7 @@ const app = express()
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 // Serve static files from the React app's build directory
-app.use(express.static(path.join(__dirname, "../client/dist")))
+app.use(express.static(path.join(__dirname, "../server/dist")))
 
 const PORT = process.env.PORT
 
