@@ -7,6 +7,8 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayText, setOverlayText] = useState("Recording...");
   const isKeyPressedRef = useRef(false);
+  const isProcessingRef = useRef(false);
+  const debounceTimeoutRef = useRef(null);
 
   const [isHovered, setIsHovered] = useState(false);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
@@ -28,34 +30,42 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
   }, [status]);
 
   const turnOnMic = async() => {
+    if (isProcessingRef.current) return;
+    
     setIsMuted(false);
+    isProcessingRef.current = true;
 
     try {
-      await startRecording(); 
+      await startRecording();
     } catch (err) {
       console.error("Error toggling recording:", err);
+      setIsMuted(true);
+    } finally {
+      isProcessingRef.current = false;
     }
-
   }
 
   const turnOffMic = async() => {
+    if (isProcessingRef.current) return;
+    
     setIsMuted(true);
+    isProcessingRef.current = true;
 
     try {
-      await stopRecording(); 
+      await stopRecording();
     } catch (err) {
       console.error("Error toggling recording:", err);
+    } finally {
+      isProcessingRef.current = false;
     }
-
   }
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-    
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
         e.preventDefault();
     
-        if (statusRef.current === "Ready to record" && !isKeyPressedRef.current) {
+        if (statusRef.current === "Ready to record" && !isKeyPressedRef.current && !isProcessingRef.current) {
           isKeyPressedRef.current = true;
           setShowOverlay(true);
           turnOnMic();
@@ -64,13 +74,22 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
     };
   
     const handleKeyUp = (e) => {
-      if (e.key.toLowerCase() === "d" || e.key.toLowerCase() === "meta" || e.key.toLowerCase() === "control") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
         e.preventDefault();
-        if (isKeyPressedRef.current) {
-          isKeyPressedRef.current = false;
-          setShowOverlay(false);
-          turnOffMic();
+        
+        // Clear any existing timeout
+        if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
         }
+
+        // Add a small delay before turning off the mic to prevent rapid toggling
+        debounceTimeoutRef.current = setTimeout(() => {
+          if (isKeyPressedRef.current) {
+            isKeyPressedRef.current = false;
+            setShowOverlay(false);
+            turnOffMic();
+          }
+        }, 100);
       }
     };
   
@@ -80,6 +99,15 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      // Clean up any lingering state
+      if (isKeyPressedRef.current) {
+        isKeyPressedRef.current = false;
+        setShowOverlay(false);
+        turnOffMic();
+      }
     };
   }, [averageVolume, hasStarted]);
 
