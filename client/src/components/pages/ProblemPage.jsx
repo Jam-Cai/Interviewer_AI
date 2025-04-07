@@ -182,7 +182,7 @@ function ProblemPage() {
           audio.play();
         } catch (err) {
           console.error('Error sending audio:', err);
-          setStatus('Error sending audio to server');
+          setStatus('Ready to record');
         }
       };
       
