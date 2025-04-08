@@ -120,7 +120,6 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
   return (
     <div id="code-editor" className="w-full p-6 pl-7 h-screen flex flex-col bg-(--background) text-white">
 
-      {/* Header */}
       <div className="flex justify-between items-center border-b border-(--code-stroke) pb-3">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold">Code Editor</h1>
@@ -140,7 +139,6 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Font Size Buttons */}
           <div className="flex mr-1">
             <button
               onClick={() => setFontSize((prev) => Math.max(prev - 2, 12))}
@@ -158,7 +156,6 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
             </button>
           </div>
 
-          {/* Language Selector */}
           <div className="border border-(--code-stroke) pr-2 pl-1 py-1 rounded-sm">
             <select
               className="bg-transparent text-sm outline-none cursor-pointer px-1 pr-2"
@@ -175,7 +172,6 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
       </div>
 
 
-      {/* Code Editor */}
       <div className="mt-3 relative flex-1 border border-(--code-stroke) rounded-sm overflow-hidden" style={{ "scrollbarColor": "var(--code-stroke) var(--background)" }}>
         <CodeMirror
           value={code}
@@ -218,7 +214,6 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
           }}
         />
 
-        {/* Floating Run Button */}
         <button
           id="run-button"
           onClick={compileCode}
@@ -228,13 +223,11 @@ function CodeEditor({ hasStarted, averageVolume, startRecording, stopRecording, 
         </button>
       </div>
 
-      {/* Output Section */}
       <div className="mt-4 bg-(--code-fill) p-3 rounded-sm border border-(--code-stroke) max-h-40 overflow-y-auto">
         <h3 className="text-[14px] font-bold text-(--code-text)">Output:</h3>
         <pre className="text-[14px] text-(--code-text) font-thin whitespace-pre-wrap">{output}</pre>
       </div>
 
-      {/* Mute Button */}
       <MuteButton status={status} hasStarted={hasStarted} averageVolume={averageVolume} startRecording={startRecording} stopRecording={stopRecording} />
     </div>
   );
