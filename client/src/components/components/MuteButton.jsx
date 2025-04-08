@@ -130,7 +130,6 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
       )}
 
       
-      {/* Mute Overlay */}
       {showOverlay && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                         bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
@@ -139,7 +138,6 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         </div>
       )}
 
-      {/* Processing Overlay */}
       {status === "Processing audio..." && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                         bg-black/30 text-white px-6 py-3 rounded-xl text-xl font-semibold 
@@ -148,9 +146,7 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
         </div>
       )}
 
-      {/* Mute Button + Bars */}
       <div className="fixed bottom-10 right-10 bg-(--mute-bg-light) rounded-full flex">
-        {/* Bars */}
         <div className="flex items-center justify-end pr-3.5 pl-5">
           <div className="flex space-x-[3px] items-center h-6">
             {barMultipliers.map((multiplier, i) => (
@@ -167,7 +163,6 @@ const MuteButton = ({ hasStarted, averageVolume, startRecording, stopRecording, 
           </div>
         </div>
 
-        {/* Mute/Unmute Button */}
         <button
           className={`cursor-pointer w-12 h-12 rounded-full bg-(--mute-bg) text-white flex items-center justify-center shadow-md transition-all z-50 ${
             !isMuted 
